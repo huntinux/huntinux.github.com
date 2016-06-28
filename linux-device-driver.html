@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Linux Device Driver</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/linux-device-driver.html" rel="bookmark"
+                   title="Permalink to Linux Device Driver">Linux Device Driver</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2014-01-01T09:00:00+08:00">
+                Wed 01 January 2014
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>学习总结</h1>
+<h2>学习内核自带的文档</h2>
+<div class="highlight"><pre><span></span>昨天阅读了一下内核中的文档：
+README
+Documentation/HOWTO
+学到了不少东西。知道了一个网站 http://kernelnewbies.org,一些FAQ , 摘录如下
+</pre></div>
+
+
+<h3>Code Browsing</h3>
+<h4>cscope，tags</h4>
+<div class="highlight"><pre><span></span>原来内核中有生成 cscope和tags的脚本
+make cscope
+make tags
+
+给make加上V=1，可以看到哪些命令被执行。
+$ make cscope V=1
+  /bin/bash linux-2.6.32.63/scripts/tags.sh cscope
+.....
++ cscope -b -f cscope.out
+可以看到调用的是 scripts/tags.sh 这个脚本。
+</pre></div>
+
+
+<h4>find + grep</h4>
+<div class="highlight"><pre><span></span>查找结构体定义
+find . -name &#39;*.[chS]&#39; | xargs grep -EnH &quot;\W*struct\W+task_struct\W*{&quot;
+查找函数定义
+find . -name &#39;*.[chS]&#39; | xargs grep -EnH &quot;cdev_init\W*\(struct cdev&quot;
+</pre></div>
+
+
+<h4>lxr    （很好的网站）</h4>
+<p><code>http://lxr.oss.org.cn/</code></p>
+<h3>编写好的驱动，怎么运行</h3>
+<div class="highlight"><pre><span></span>保证开发板内核/虚拟机内核 与 你编译驱动时的内核版本一样
+</pre></div>
+
+
+<h4>在开发板上运行</h4>
+<div class="highlight"><pre><span></span>我有个mini2440开发板，一般是在PC上使用交叉编译工具编译好之后，放到开发的文件系统上即可。（文件系统最好用网络文件系统，这样比较方便）
+</pre></div>
+
+
+<h4>建立一个虚拟机</h4>
+<div class="highlight"><pre><span></span>找一个内核为 2.6.32以下（因为我要以2.6.32为研究对象）的linux发行版本。fedora12是2.6.31。可以编译安装2.6.32内核，然后编写驱动测试。
+下载fedora 12:
+
+axel -n 6 http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/12/
+使用axel应该比wget快点。
+</pre></div>
+
+
+<h1>学习资料</h1>
+<h2>LDD3 book</h2>
+<ul>
+<li><a href="http://lwn.net/Kernel/LDD3/">英文</a></li>
+<li><a href="http://oss.org.cn/kernel-book/ldd3/index.html">中文</a></li>
+</ul>
+<h2>驱动代码下载</h2>
+<ul>
+<li><a href="http://examples.oreilly.com/9780596005900/">kernel 2.6.x</a></li>
+<li><a href="https://github.com/kerneltravel/ldd3-examples-3.x">kernel 3.x</a></li>
+<li><a href="https://github.com/4get/ldd3_examples">other</a></li>
+</ul>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "linux-device-driver.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>

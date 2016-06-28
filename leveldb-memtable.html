@@ -177,7 +177,7 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 
 
 <p>该函数根据key在table中查找，找到时返回一个迭代器iter，那么entry就指向key（即上面Add函数中的buf）</p>
-<div class="highlight"><pre><span></span>    const char* entry = iter.key();
+<div class="highlight"><pre><span></span>    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">iter</span><span class="p">.</span><span class="n">key</span><span class="p">();</span>
 </pre></div>
 
 
@@ -188,7 +188,7 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 <p>其中SequenceNumber和Type被打包成一个8字节组。</p>
 <p>那么找到key的过程是这样的：
 首先要取出internal_key_size。还记得varint是个边长编码吗？但是varint最长不会超过5字节，所以函数<code>GetVarint32Ptr</code>可以从entry的前5个字节解码出internal_key_size。注意，该函数能够处理internal_key_size不足5个字节的情况，原因是：由于varint的编码方式是使用每个字节的第8位表示是否有后续字节，所以该函数可以处理变长的varint。^_^。同时，该函数将返回<code>internal_key</code>的首地址。</p>
-<div class="highlight"><pre><span></span>const char* key_ptr = GetVarint32Ptr(entry, entry+5, &amp;key_length);
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key_ptr</span> <span class="o">=</span> <span class="n">GetVarint32Ptr</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">entry</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key_length</span><span class="p">);</span>
 </pre></div>
 
 
@@ -201,18 +201,18 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 
 
 <p>最后，如果Type是<code>kTypeValue</code>，那么就返回value部分；如果Type是<code>kTypeDeletion</code>，表示该数据被标记为删除类型，返回NotFound。</p>
-<div class="highlight"><pre><span></span><span class="o">//</span> <span class="err">获得</span> <span class="nt">SequenceNumber</span> <span class="o">+</span> <span class="nt">Type</span> <span class="o">,</span> <span class="nt">Type</span><span class="err">是最后一个字节，即下面的</span> <span class="nt">tag</span> <span class="o">&amp;</span> <span class="nt">0xff</span><span class="err">。</span>
-<span class="nt">const</span> <span class="nt">uint64_t</span> <span class="nt">tag</span> <span class="o">=</span> <span class="nt">DecodeFixed64</span><span class="o">(</span><span class="nt">key_ptr</span> <span class="o">+</span> <span class="nt">key_length</span> <span class="nt">-</span> <span class="nt">8</span><span class="o">);</span>
-<span class="nt">switch</span> <span class="o">(</span><span class="nt">static_cast</span><span class="o">&lt;</span><span class="nt">ValueType</span><span class="o">&gt;(</span><span class="nt">tag</span> <span class="o">&amp;</span> <span class="nt">0xff</span><span class="o">))</span> <span class="p">{</span>
-  <span class="n">case</span> <span class="n">kTypeValue</span><span class="o">:</span> <span class="err">{</span>
+<div class="highlight"><pre><span></span><span class="c1">//获得 SequenceNumber + Type , Type是最后一个字节，即下面的 tag &amp; 0xff。</span>
+<span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">DecodeFixed64</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">);</span>
+<span class="k">switch</span> <span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">tag</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">))</span> <span class="p">{</span>
+  <span class="k">case</span> <span class="nl">kTypeValue</span><span class="p">:</span> <span class="p">{</span>
     <span class="n">Slice</span> <span class="n">v</span> <span class="o">=</span> <span class="n">GetLengthPrefixedSlice</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span><span class="p">);</span>
-    <span class="n">value</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="p">()</span><span class="o">,</span> <span class="n">v</span><span class="o">.</span><span class="nb">size</span><span class="p">());</span>
-    <span class="n">return</span> <span class="n">true</span><span class="p">;</span>
+    <span class="n">value</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
   <span class="p">}</span>
-  <span class="nt">case</span> <span class="nt">kTypeDeletion</span><span class="o">:</span>
-    <span class="o">*</span><span class="nt">s</span> <span class="o">=</span> <span class="nt">Status</span><span class="o">:</span><span class="nd">:NotFound</span><span class="o">(</span><span class="nt">Slice</span><span class="o">());</span>
-    <span class="nt">return</span> <span class="nt">true</span><span class="o">;</span>
-<span class="err">}</span>
+  <span class="k">case</span> <span class="nl">kTypeDeletion</span><span class="p">:</span>
+    <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="n">Status</span><span class="o">::</span><span class="n">NotFound</span><span class="p">(</span><span class="n">Slice</span><span class="p">());</span>
+    <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+<span class="p">}</span>
 </pre></div>
 
 
@@ -229,17 +229,17 @@ LookupKey是helper类，将用户查询使用的userkey转化为internal_key的�
 </li>
 </ol>
 <p>成员变量：构成是这样的 <code>| klength | userkey | tag |</code></p>
-<div class="highlight"><pre><span></span>  // We construct a char array of the form:
-  //    klength  varint32               &lt;-- start_
-  //    userkey  char[klength]          &lt;-- kstart_
-  //    tag      uint64
-  //                                    &lt;-- end_
-  // The array is a suitable MemTable key.
-  // The suffix starting with &quot;userkey&quot; can be used as an InternalKey.
-  const char* start_;
-  const char* kstart_;
-  const char* end_;
-  char space_[200];      // Avoid allocation for short keys
+<div class="highlight"><pre><span></span>  <span class="c1">// We construct a char array of the form:</span>
+  <span class="c1">//    klength  varint32               &lt;-- start_</span>
+  <span class="c1">//    userkey  char[klength]          &lt;-- kstart_</span>
+  <span class="c1">//    tag      uint64</span>
+  <span class="c1">//                                    &lt;-- end_</span>
+  <span class="c1">// The array is a suitable MemTable key.</span>
+  <span class="c1">// The suffix starting with &quot;userkey&quot; can be used as an InternalKey.</span>
+  <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">start_</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">kstart_</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">end_</span><span class="p">;</span>
+  <span class="kt">char</span> <span class="n">space_</span><span class="p">[</span><span class="mi">200</span><span class="p">];</span>      <span class="c1">// Avoid allocation for short keys</span>
 </pre></div>
 
 
@@ -297,6 +297,7 @@ LookupKey是helper类，将用户查询使用的userkey转化为internal_key的�
 <h4>Categories</h4>
 <ul class="blank">
 		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
 		<li><a href="/category/others.html">Others</a></li>
 </ul>
 
