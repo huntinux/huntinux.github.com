@@ -1,64 +1,68 @@
 <!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<html lang="zh">
 <head>
-  <meta charset="utf-8">
-  <title>LevelDB : SkipList &mdash; Jinger's Blog</title>
-  <meta name="author" content="jinger">
+
+        <title>LevelDB : SkipList</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
 
 
 
 
-
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-    <link href="/favicon.png" rel="icon">
-
-  <link href="/theme/css/main.css" media="screen, projection"
-        rel="stylesheet" type="text/css">
-
-  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
-        rel="stylesheet" type="text/css">
-  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
-        rel="stylesheet" type="text/css">
 </head>
 
-<body>
-  <header role="banner"><hgroup>
-  <h1><a href="/">Jinger's Blog</a></h1>
-</hgroup></header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-</ul>
+<body id="index" class="home">
 
 
-<ul class="main-navigation">
-      <li class="active">
-        <a href="/category/leveldb.html">Leveldb</a>
-      </li>
-      <li >
-        <a href="/category/linux.html">Linux</a>
-      </li>
-      <li >
-        <a href="/category/others.html">Others</a>
-      </li>
-</ul></nav>
-  <div id="main">
-    <div id="content">
-<div>
-  <article class="hentry" role="article">
-<header>
-      <h1 class="entry-title">LevelDB : SkipList</h1>
-    <p class="meta">
-<time datetime="2016-06-26T09:00:00+08:00" pubdate>Sun 26 June 2016</time>    </p>
-</header>
+    <div class="container">
 
-  <div class="entry-content"><h1>引文</h1>
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/leveldb-skiplist.html" rel="bookmark"
+                   title="Permalink to LevelDB : SkipList">LevelDB : SkipList</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-06-26T09:00:00+08:00">
+                Sun 26 June 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>引文</h1>
 <blockquote>
 <p>论文
 http://www.cl.cam.ac.uk/teaching/0506/Algorithms/skiplists.pdf
@@ -101,31 +105,31 @@ http://www.tuicool.com/articles/uuQryy3 (作者对height的分析不错)</p>
 <p>原文解释在<a href="http://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:page:find">这里</a>
 大概是说，如果每层跳跃是2的i次方（i代表层数）,那么<code>find</code>性能与二分查找类似，确实能达到O(lgN)，但是<code>insert</code>和<code>delete</code>的性能却是O(N)。因为插入或删除时需要对节点进行必要的调整。 </p>
 <blockquote>
-<p>This data structure is looking pretty good, but there's a serious problem with it for the insert and remove operations. The work required to reorganize the list after an insertion or deletion is in $O(n)$. 
+<p>This data structure is looking pretty good, but there's a serious problem with it for the insert and remove operations. The work required to reorganize the list after an insertion or deletion is in <span class="math">\(O(n)\)</span>. 
 For example, suppose that the first element is removed in Figure 3. Since it is necessary to maintain the strict pattern of node sizes, values from 2 to the end must be moved toward the head and the end node must be removed. A similar situation occurs when a new element is added to the list. This is where the probabilistic approach of a true Skip List comes into play. 
-A Skip List is built with the same distribution of node sizes, but without the requirement for the rigid pattern of node sizes shown. It is no longer necessary to maintain the rigid pattern by moving values around after a remove or insert operation. Pugh shows that with high probability such a list still exhibits $O(\lg n)$ behavior. The probability that a given Skip List will perform badly is very small. </p>
+A Skip List is built with the same distribution of node sizes, but without the requirement for the rigid pattern of node sizes shown. It is no longer necessary to maintain the rigid pattern by moving values around after a remove or insert operation. Pugh shows that with high probability such a list still exhibits <span class="math">\(O(\lg n)\)</span> behavior. The probability that a given Skip List will perform badly is very small. </p>
 </blockquote>
 <h1>确定Max Level</h1>
 <blockquote>
-<p>The level of the header node is the maximum allowed level in the SkipList and is chosen at construction. Pugh shows that the maximum level should be chosen as $\log_\frac{1}{p} n$. Thus, for $p = \frac{1}{2}$, the maximum level for a SkipList of up to 65,536 elements should be chosen no smaller than $\lg_2 65536 = 16$. </p>
+<p>The level of the header node is the maximum allowed level in the SkipList and is chosen at construction. Pugh shows that the maximum level should be chosen as <span class="math">\(\log_\frac{1}{p} n\)</span>. Thus, for <span class="math">\(p = \frac{1}{2}\)</span>, the maximum level for a SkipList of up to 65,536 elements should be chosen no smaller than <span class="math">\(\lg_2 65536 = 16\)</span>. </p>
 </blockquote>
-<p>对于$p = \frac{1}{2}$, 有65536个元素的SkipList，MaxLevel应该小于$\lg_2 65536 = 16$</p>
+<p>对于<span class="math">\(p = \frac{1}{2}\)</span>, 有65536个元素的SkipList，MaxLevel应该小于<span class="math">\(\lg_2 65536 = 16\)</span></p>
 <h1>随机生成节点的level</h1>
 <p>节点的level是根据概率p随机生成的。伪代码如下所示：</p>
-<div class="highlight"><pre><span></span>   int generateNodeLevel(double p, int maxLevel)
-   {
-    int level = 1;
+<div class="highlight"><pre>   <span class="nb">int</span> <span class="n">generateNodeLevel</span><span class="p">(</span><span class="n">double</span> <span class="n">p</span><span class="p">,</span> <span class="nb">int</span> <span class="n">maxLevel</span><span class="p">)</span>
+   <span class="p">{</span>
+    <span class="nb">int</span> <span class="n">level</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
 
-    while (drand48() &lt; p)
-      level++;
-    return (level &gt; maxLevel) ? maxLevel : level;
-   }
+    <span class="k">while</span> <span class="p">(</span><span class="n">drand48</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p</span><span class="p">)</span>
+      <span class="n">level</span><span class="o">++</span><span class="p">;</span>
+    <span class="k">return</span> <span class="p">(</span><span class="n">level</span> <span class="o">&gt;</span> <span class="n">maxLevel</span><span class="p">)</span> <span class="p">?</span> <span class="n">maxLevel</span> <span class="p">:</span> <span class="n">level</span><span class="p">;</span>
+   <span class="p">}</span>
 </pre></div>
 
 
-<p>那么<code>find</code>的平均比对次数为： $1 + \frac{\log_\frac{1}{p} n}{p} + \frac{1}{1 - p}$</p>
-<p>具体来说，对于含有n=65536个元素的skiplist来说，$p = \frac{1}{4}$ ，则平均比较次数为34.3； $p = \frac{1}{2}$， 则平均比较次数为35。</p>
-<p>对于一个sorted list来说，平均查找次数是$\frac{n}{2} = 32768$</p>
+<p>那么<code>find</code>的平均比对次数为： <span class="math">\(1 + \frac{\log_\frac{1}{p} n}{p} + \frac{1}{1 - p}\)</span></p>
+<p>具体来说，对于含有n=65536个元素的skiplist来说，<span class="math">\(p = \frac{1}{4}\)</span> ，则平均比较次数为34.3； <span class="math">\(p = \frac{1}{2}\)</span>， 则平均比较次数为35。</p>
+<p>对于一个sorted list来说，平均查找次数是<span class="math">\(\frac{n}{2} = 32768\)</span></p>
 <p>可以看到，skip list的查找性能有多大的提升。</p>
 <blockquote>
 <p><a href="http://www.tiuicool.com/articles/uuQryy3">这篇文章指出</a>：
@@ -140,13 +144,13 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 源码位置: db/skiplist.h db/skiplist.c</p>
 </blockquote>
 <h2>MaxLevel</h2>
-<div class="highlight"><pre><span></span>  <span class="k">enum</span> <span class="p">{</span> <span class="n">kMaxHeight</span> <span class="o">=</span> <span class="mi">12</span> <span class="p">};</span>
+<div class="highlight"><pre>  <span class="k">enum</span> <span class="p">{</span> <span class="n">kMaxHeight</span> <span class="o">=</span> <span class="mi">12</span> <span class="p">};</span>
 </pre></div>
 
 
 <p>可以看到，初始时，MaxLevel定义为12，但是Insert操作有可能会修改它。</p>
 <h2>节点定义</h2>
-<div class="highlight"><pre><span></span><span class="c1">// Implementation details follow</span>
+<div class="highlight"><pre><span class="c1">// Implementation details follow</span>
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Node</span> <span class="p">{</span>
   <span class="n">explicit</span> <span class="n">Node</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">k</span><span class="p">)</span> <span class="o">:</span> <span class="n">key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
@@ -178,7 +182,7 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
     <span class="n">next_</span><span class="p">[</span><span class="n">n</span><span class="p">].</span><span class="n">NoBarrier_Store</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
   <span class="p">}</span>
 
- <span class="nl">private</span><span class="p">:</span>
+ <span class="nl">private:</span>
   <span class="c1">// Array of length equal to the node height.  next_[0] is lowest level link.</span>
   <span class="n">port</span><span class="o">::</span><span class="n">AtomicPointer</span> <span class="n">next_</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="c1">// 数组的长度就是该节点的高度，next_[0]是最底层的链表</span>
 <span class="p">};</span>
@@ -188,14 +192,14 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">NewNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">)</span> <span class="p">{</span>
   <span class="kt">char</span><span class="o">*</span> <span class="n">mem</span> <span class="o">=</span> <span class="n">arena_</span><span class="o">-&gt;</span><span class="n">AllocateAligned</span><span class="p">(</span>
       <span class="k">sizeof</span><span class="p">(</span><span class="n">Node</span><span class="p">)</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">port</span><span class="o">::</span><span class="n">AtomicPointer</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">));</span>
-  <span class="k">return</span> <span class="nf">new</span> <span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">new</span> <span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
 
 <p>创建节点时使用<code>Arena</code>分派空间。Arena是LevelDB中的内存池。next_[1]使用了<code>弹性指针</code>，可以根据Node的高度不同，申请不同的空间。</p>
 <p>目前还不清楚<code>弹性指针</code>相对于<code>指针变量</code>的优势是什么？ 个人觉得如果需要将变长数据拷贝到结构体中（深拷贝），使用弹性指针更方便。对比如下：</p>
-<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
+<div class="highlight"><pre><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
     <span class="kt">int</span> <span class="n">key</span><span class="p">;</span>
     <span class="kt">char</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
 <span class="p">}</span><span class="err">；</span>
@@ -208,13 +212,13 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 
 
 <p>在堆上分派Foo对象可以这么写，其中val部分可以是变长的。通过对比可以看出弹性指针在申请和释放时都要简便。</p>
-<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
+<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
 <span class="n">Foo</span> <span class="o">*</span><span class="n">f</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Foo</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">));</span>
 <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
+<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
 <span class="n">Foo2</span> <span class="o">*</span><span class="n">f</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Foo2</span><span class="p">));</span>
 <span class="n">f</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">));</span>
 <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">);</span>
@@ -223,7 +227,7 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 
 
 <h2>随机生成高度</h2>
-<div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="kt">int</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">RandomHeight</span><span class="p">()</span> <span class="p">{</span>
   <span class="c1">// Increase height with probability 1 in kBranching</span>
   <span class="k">static</span> <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">kBranching</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
@@ -243,7 +247,7 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 <p>返回第一个大于或等于该节点的位置。
 其中prev数组记录了在每一层中的前驱节点。
 prev数组的作用应该是方便后续的插入过程。这与单链表中的插入是一个道理。</p>
-<div class="highlight"><pre><span></span><span class="c1">// Return the earliest node that comes at or after key.</span>
+<div class="highlight"><pre><span class="c1">// Return the earliest node that comes at or after key.</span>
 <span class="c1">// Return NULL if there is no such node.</span>
 <span class="c1">//</span>
 <span class="c1">// If prev is non-NULL, fills prev[level] with pointer to previous</span>
@@ -273,8 +277,8 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 
 <p>还有一个判断是否包含某个元素的接口：</p>
-<div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
   <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">))</span> <span class="p">{</span>
     <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
@@ -286,60 +290,60 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 
 <p>其中Equal调用的是创建SkipList传入的比较器</p>
-<div class="highlight"><pre><span></span>  bool Equal(const Key&amp; a, const Key&amp; b) const { return (compare_(a, b) == 0); }
+<div class="highlight"><pre>  <span class="n">bool</span> <span class="n">Equal</span><span class="p">(</span><span class="n">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
 </pre></div>
 
 
 <h2>插入操作</h2>
 <p>插入过程与单链表冲插入过程一样，需要得到前驱节点。而前驱节点的信息是在查找过程中确定的，保存在了prev数组中。</p>
-<div class="highlight"><pre><span></span>template&lt;typename Key, class Comparator&gt;
-void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
-  // TODO(opt): We can use a barrier-free variant of FindGreaterOrEqual()
-  // here since Insert() is externally synchronized.
-  Node* prev[kMaxHeight];
-  Node* x = FindGreaterOrEqual(key, prev); // 进行查找
+<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="n">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<span class="n">void</span> <span class="n">SkipList</span><span class="sr">&lt;Key,Comparator&gt;</span><span class="o">::</span><span class="n">Insert</span><span class="p">(</span><span class="n">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+  <span class="sr">//</span> <span class="n">TODO</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span> <span class="n">We</span> <span class="n">can</span> <span class="k">use</span> <span class="n">a</span> <span class="n">barrier</span><span class="o">-</span><span class="n">free</span> <span class="n">variant</span> <span class="n">of</span> <span class="n">FindGreaterOrEqual</span><span class="p">()</span>
+  <span class="sr">//</span> <span class="n">here</span> <span class="n">since</span> <span class="n">Insert</span><span class="p">()</span> <span class="n">is</span> <span class="n">externally</span> <span class="n">synchronized</span><span class="o">.</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">prev</span><span class="p">[</span><span class="n">kMaxHeight</span><span class="p">];</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">prev</span><span class="p">);</span> <span class="sr">//</span> <span class="err">进行查找</span>
 
-  // Our data structure does not allow duplicate insertion
-  assert(x == NULL || !Equal(key, x-&gt;key)); // 不允许插入重复数据
+  <span class="sr">//</span> <span class="n">Our</span> <span class="n">data</span> <span class="n">structure</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">allow</span> <span class="n">duplicate</span> <span class="n">insertion</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">NULL</span> <span class="o">||</span> <span class="o">!</span><span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">));</span> <span class="sr">//</span> <span class="err">不允许插入重复数据</span>
 
-  int height = RandomHeight();   // 生成随机的高度height
-  if (height &gt; GetMaxHeight()) { // 如果height大于最大高度，将增加层次中的前驱设为head
-    for (int i = GetMaxHeight(); i &lt; height; i++) {
-      prev[i] = head_;
-    }
-    //fprintf(stderr, &quot;Change height from %d to %d\n&quot;, max_height_, height);
+  <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="n">RandomHeight</span><span class="p">();</span>   <span class="sr">//</span> <span class="err">生成随机的高度</span><span class="n">height</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">height</span> <span class="o">&gt;</span> <span class="n">GetMaxHeight</span><span class="p">())</span> <span class="p">{</span> <span class="sr">//</span> <span class="err">如果</span><span class="n">height</span><span class="err">大于最大高度，将增加层次中的前驱设为</span><span class="n">head</span>
+    <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">GetMaxHeight</span><span class="p">();</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">head_</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="sr">//</span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Change height from %d to %d\n&quot;</span><span class="p">,</span> <span class="n">max_height_</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
 
-    // It is ok to mutate max_height_ without any synchronization
-    // with concurrent readers.  A concurrent reader that observes
-    // the new value of max_height_ will see either the old value of
-    // new level pointers from head_ (NULL), or a new value set in
-    // the loop below.  In the former case the reader will
-    // immediately drop to the next level since NULL sorts after all
-    // keys.  In the latter case the reader will use the new node.
-    max_height_.NoBarrier_Store(reinterpret_cast&lt;void*&gt;(height)); // 更新当前高度max_height_
-  }
+    <span class="sr">//</span> <span class="n">It</span> <span class="n">is</span> <span class="n">ok</span> <span class="n">to</span> <span class="n">mutate</span> <span class="n">max_height_</span> <span class="n">without</span> <span class="n">any</span> <span class="n">synchronization</span>
+    <span class="sr">//</span> <span class="n">with</span> <span class="n">concurrent</span> <span class="n">readers</span><span class="o">.</span>  <span class="n">A</span> <span class="n">concurrent</span> <span class="n">reader</span> <span class="n">that</span> <span class="n">observes</span>
+    <span class="sr">//</span> <span class="n">the</span> <span class="k">new</span> <span class="n">value</span> <span class="n">of</span> <span class="n">max_height_</span> <span class="n">will</span> <span class="n">see</span> <span class="n">either</span> <span class="n">the</span> <span class="n">old</span> <span class="n">value</span> <span class="n">of</span>
+    <span class="sr">//</span> <span class="k">new</span> <span class="n">level</span> <span class="n">pointers</span> <span class="n">from</span> <span class="n">head_</span> <span class="p">(</span><span class="n">NULL</span><span class="p">),</span> <span class="ow">or</span> <span class="n">a</span> <span class="k">new</span> <span class="n">value</span> <span class="n">set</span> <span class="n">in</span>
+    <span class="sr">//</span> <span class="n">the</span> <span class="n">loop</span> <span class="n">below</span><span class="o">.</span>  <span class="n">In</span> <span class="n">the</span> <span class="n">former</span> <span class="k">case</span> <span class="n">the</span> <span class="n">reader</span> <span class="n">will</span>
+    <span class="sr">//</span> <span class="n">immediately</span> <span class="n">drop</span> <span class="n">to</span> <span class="n">the</span> <span class="k">next</span> <span class="n">level</span> <span class="n">since</span> <span class="n">NULL</span> <span class="n">sorts</span> <span class="n">after</span> <span class="n">all</span>
+    <span class="sr">//</span> <span class="nb">keys</span><span class="o">.</span>  <span class="n">In</span> <span class="n">the</span> <span class="n">latter</span> <span class="k">case</span> <span class="n">the</span> <span class="n">reader</span> <span class="n">will</span> <span class="k">use</span> <span class="n">the</span> <span class="k">new</span> <span class="n">node</span><span class="o">.</span>
+    <span class="n">max_height_</span><span class="o">.</span><span class="n">NoBarrier_Store</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="sr">&lt;void*&gt;</span><span class="p">(</span><span class="n">height</span><span class="p">));</span> <span class="sr">//</span> <span class="err">更新当前高度</span><span class="n">max_height_</span>
+  <span class="p">}</span>
 
-  x = NewNode(key, height);          // 生成一个新节点
-  for (int i = 0; i &lt; height; i++) { // 插入该节点
-    // NoBarrier_SetNext() suffices since we will add a barrier when
-    // we publish a pointer to &quot;x&quot; in prev[i].
-    x-&gt;NoBarrier_SetNext(i, prev[i]-&gt;NoBarrier_Next(i));
-    prev[i]-&gt;SetNext(i, x);
-  }
-}
+  <span class="n">x</span> <span class="o">=</span> <span class="n">NewNode</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>          <span class="sr">//</span> <span class="err">生成一个新节点</span>
+  <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span> <span class="sr">//</span> <span class="err">插入该节点</span>
+    <span class="sr">//</span> <span class="n">NoBarrier_SetNext</span><span class="p">()</span> <span class="n">suffices</span> <span class="n">since</span> <span class="n">we</span> <span class="n">will</span> <span class="n">add</span> <span class="n">a</span> <span class="n">barrier</span> <span class="n">when</span>
+    <span class="sr">//</span> <span class="n">we</span> <span class="n">publish</span> <span class="n">a</span> <span class="n">pointer</span> <span class="n">to</span> <span class="s">&quot;x&quot;</span> <span class="n">in</span> <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span>
+    <span class="n">x</span><span class="o">-&gt;</span><span class="n">NoBarrier_SetNext</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">NoBarrier_Next</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
+    <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetNext</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
 </pre></div>
 
 
 <h1>可供单独测试的代码</h1>
 <h2>C++</h2>
 <p>下面的代码是从LevelDB中抽离出来的，去掉了内存池arena的使用，去掉了并发控制、内存屏障等，存在的问题是动态申请的堆资源没有释放。不过不影响理解skiplist。</p>
-<div class="highlight"><pre><span></span>$ g++ -Wall -O2 skiplist_test.cc -o <span class="nb">test</span>
+<div class="highlight"><pre><span class="nv">$</span> <span class="nv">g</span><span class="o">++</span> <span class="o">-</span><span class="n">Wall</span> <span class="o">-</span><span class="n">O2</span> <span class="n">skiplist_test</span><span class="o">.</span><span class="n">cc</span> <span class="o">-</span><span class="n">o</span> <span class="n">test</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span></span><span class="c1">// skiplist_test.cc</span>
-<span class="cp">#include</span> <span class="cpf">&quot;skiplist.h&quot;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;set&gt;</span><span class="cp"></span>
+<div class="highlight"><pre><span class="cp">// skiplist_test.cc</span>
+<span class="cp">#include &quot;skiplist.h&quot;</span>
+<span class="cp">#include &lt;set&gt;</span>
 
 <span class="cp">#define ASSERT_EQ(M,N) assert((M) == (N))</span>
 <span class="cp">#define ASSERT_TRUE(C) assert((C))</span>
@@ -362,7 +366,7 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 
 <span class="p">}</span> <span class="c1">// namespace jinger</span>
 
-<span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
+<span class="cp">#include &lt;time.h&gt;</span>
 <span class="n">using</span> <span class="n">namespace</span> <span class="n">jinger</span><span class="p">;</span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
@@ -391,23 +395,23 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 </pre></div>
 
 
-<div class="highlight"><pre><span></span><span class="c1">// skiplist.h</span>
+<div class="highlight"><pre><span class="cp">// skiplist.h</span>
 <span class="cp">#ifndef STORAGE_JINGER_SKIPLIST_H_</span>
 <span class="cp">#define STORAGE_JINGER_SKIPLIST_H_</span>
 
-<span class="cp">#include</span> <span class="cpf">&lt;assert.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdint.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include &lt;assert.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;stdint.h&gt;</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
 
 <span class="n">namespace</span> <span class="n">jinger</span><span class="p">{</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="n">class</span> <span class="n">SkipList</span> <span class="p">{</span>
- <span class="nl">private</span><span class="p">:</span>
+ <span class="nl">private:</span>
   <span class="k">struct</span> <span class="n">Node</span><span class="p">;</span>
 
- <span class="nl">public</span><span class="p">:</span>
+ <span class="nl">public:</span>
   <span class="c1">// Create a new SkipList object that will use &quot;cmp&quot; for comparing keys,</span>
   <span class="c1">// and will allocate memory using &quot;*arena&quot;.  Objects allocated in the arena</span>
   <span class="c1">// must remain allocated for the lifetime of the skiplist object.</span>
@@ -415,20 +419,20 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 
   <span class="c1">// Insert key into the list.</span>
   <span class="c1">// REQUIRES: nothing that compares equal to key is currently in the list.</span>
-  <span class="kt">void</span> <span class="nf">Insert</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="n">Insert</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">);</span>
 
   <span class="c1">// Returns true iff an entry that compares equal to key is in the list.</span>
-  <span class="kt">bool</span> <span class="nf">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">bool</span> <span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Iteration over the contents of a skip list</span>
   <span class="n">class</span> <span class="n">Iterator</span> <span class="p">{</span>
-   <span class="nl">public</span><span class="p">:</span>
+   <span class="nl">public:</span>
     <span class="c1">// Initialize an iterator over the specified list.</span>
     <span class="c1">// The returned iterator is not valid.</span>
     <span class="n">explicit</span> <span class="n">Iterator</span><span class="p">(</span><span class="k">const</span> <span class="n">SkipList</span><span class="o">*</span> <span class="n">list</span><span class="p">);</span>
 
     <span class="c1">// Returns true iff the iterator is positioned at a valid node.</span>
-    <span class="kt">bool</span> <span class="nf">Valid</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="n">bool</span> <span class="n">Valid</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
 
     <span class="c1">// Returns the key at the current position.</span>
     <span class="c1">// REQUIRES: Valid()</span>
@@ -436,30 +440,30 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 
     <span class="c1">// Advances to the next position.</span>
     <span class="c1">// REQUIRES: Valid()</span>
-    <span class="kt">void</span> <span class="nf">Next</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="n">Next</span><span class="p">();</span>
 
     <span class="c1">// Advances to the previous position.</span>
     <span class="c1">// REQUIRES: Valid()</span>
-    <span class="kt">void</span> <span class="nf">Prev</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="n">Prev</span><span class="p">();</span>
 
     <span class="c1">// Advance to the first entry with a key &gt;= target</span>
-    <span class="kt">void</span> <span class="nf">Seek</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">target</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="n">Seek</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">target</span><span class="p">);</span>
 
     <span class="c1">// Position at the first entry in list.</span>
     <span class="c1">// Final state of iterator is Valid() iff list is not empty.</span>
-    <span class="kt">void</span> <span class="nf">SeekToFirst</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="n">SeekToFirst</span><span class="p">();</span>
 
     <span class="c1">// Position at the last entry in list.</span>
     <span class="c1">// Final state of iterator is Valid() iff list is not empty.</span>
-    <span class="kt">void</span> <span class="nf">SeekToLast</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="n">SeekToLast</span><span class="p">();</span>
 
-   <span class="nl">private</span><span class="p">:</span>
+   <span class="nl">private:</span>
     <span class="k">const</span> <span class="n">SkipList</span><span class="o">*</span> <span class="n">list_</span><span class="p">;</span>
     <span class="n">Node</span><span class="o">*</span> <span class="n">node_</span><span class="p">;</span>
     <span class="c1">// Intentionally copyable</span>
   <span class="p">};</span>
 
- <span class="nl">private</span><span class="p">:</span>
+ <span class="nl">private:</span>
   <span class="k">enum</span> <span class="p">{</span> <span class="n">kMaxHeight</span> <span class="o">=</span> <span class="mi">12</span> <span class="p">};</span>
 
   <span class="c1">// Immutable after construction</span>
@@ -469,31 +473,31 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 
   <span class="kt">uint32_t</span> <span class="n">max_height_</span><span class="p">;</span>   <span class="c1">// Height of the entire list</span>
 
-  <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">GetMaxHeight</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+  <span class="kr">inline</span> <span class="kt">int</span> <span class="n">GetMaxHeight</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
     <span class="k">return</span> <span class="n">max_height_</span><span class="p">;</span>
   <span class="p">}</span>
 
-  <span class="n">Node</span><span class="o">*</span> <span class="nf">NewNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">);</span>
-  <span class="kt">int</span> <span class="nf">RandomHeight</span><span class="p">();</span>
-  <span class="kt">bool</span> <span class="nf">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">NewNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="n">RandomHeight</span><span class="p">();</span>
+  <span class="n">bool</span> <span class="n">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
 
   <span class="c1">// Return true if key is greater than the data stored in &quot;n&quot;</span>
-  <span class="kt">bool</span> <span class="nf">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">bool</span> <span class="n">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Return the earliest node that comes at or after key.</span>
   <span class="c1">// Return NULL if there is no such node.</span>
   <span class="c1">//</span>
   <span class="c1">// If prev is non-NULL, fills prev[level] with pointer to previous</span>
   <span class="c1">// node at &quot;level&quot; for every level in [0..max_height_-1].</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="nf">FindGreaterOrEqual</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">**</span> <span class="n">prev</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">**</span> <span class="n">prev</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Return the latest node with a key &lt; key.</span>
   <span class="c1">// Return head_ if there is no such node.</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="nf">FindLessThan</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">FindLessThan</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Return the last node in the list.</span>
   <span class="c1">// Return head_ if list is empty.</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="nf">FindLast</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">FindLast</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// No copying allowed</span>
   <span class="n">SkipList</span><span class="p">(</span><span class="k">const</span> <span class="n">SkipList</span><span class="o">&amp;</span><span class="p">);</span>
@@ -534,7 +538,7 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
   <span class="c1">//  next_[n].NoBarrier_Store(x);</span>
   <span class="c1">//}</span>
 
- <span class="nl">private</span><span class="p">:</span>
+ <span class="nl">private:</span>
   <span class="c1">// Array of length equal to the node height.  next_[0] is lowest level link.</span>
   <span class="c1">//port::AtomicPointer next_[1];</span>
   <span class="kt">void</span><span class="o">*</span> <span class="n">next_</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
@@ -549,7 +553,7 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
   <span class="c1">//</span>
 
   <span class="kt">char</span><span class="o">*</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="n">new</span> <span class="kt">char</span><span class="p">[</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Node</span><span class="p">)</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)];</span>
-  <span class="k">return</span> <span class="nf">new</span> <span class="p">(</span><span class="n">new_mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span> <span class="c1">// 使用自己分配的内存空间上调用构造函数,没有考虑资源的释放，资源泄露</span>
+  <span class="k">return</span> <span class="n">new</span> <span class="p">(</span><span class="n">new_mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span> <span class="c1">// 使用自己分配的内存空间上调用构造函数,没有考虑资源的释放，资源泄露</span>
 
   <span class="c1">//return static_cast&lt;Node*&gt;(malloc(sizeof(Node) + sizeof(void*) * (height - 1))); // 没有调用构造函数，malloc只分配空间，不会调用构造函数。而new会调用构造函数</span>
 <span class="p">}</span>
@@ -561,7 +565,7 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 <span class="p">}</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="kr">inline</span> <span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Iterator</span><span class="o">::</span><span class="n">Valid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+<span class="kr">inline</span> <span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Iterator</span><span class="o">::</span><span class="n">Valid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
   <span class="k">return</span> <span class="n">node_</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">;</span>
 <span class="p">}</span>
 
@@ -621,7 +625,7 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 <span class="p">}</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
   <span class="c1">// NULL n is considered infinite</span>
   <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">n</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
@@ -739,7 +743,7 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 <span class="p">}</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
   <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">))</span> <span class="p">{</span>
     <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
@@ -756,16 +760,16 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 
 <h2>c</h2>
 <p>c语言版本大体上是对c++版本的“翻译”</p>
-<div class="highlight"><pre><span></span><span class="p">$</span><span class="nv">gcc</span><span class="x"> skiplist.c -o sl</span>
+<div class="highlight"><pre><span class="nv">$gcc</span> <span class="n">skiplist</span><span class="o">.</span><span class="n">c</span> <span class="o">-</span><span class="n">o</span> <span class="n">sl</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span></span><span class="c1">// skiplist.c</span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdint.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;assert.h&gt;</span><span class="cp"></span>
-<span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
+<div class="highlight"><pre><span class="cp">// skiplist.c</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;stdint.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;assert.h&gt;</span>
+<span class="cp">#include &lt;time.h&gt;</span>
 
 <span class="k">typedef</span> <span class="kt">uint32_t</span> <span class="n">Key</span><span class="p">;</span>
 
@@ -902,97 +906,162 @@ void SkipList&lt;Key,Comparator&gt;::Insert(const Key&amp; key) {
 
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
-</pre></div></div>
-    <footer>
-<p class="meta">
-  <span class="byline author vcard">
-    Posted by <span class="fn">
-        hongjin.cao
-    </span>
-  </span>
-<time datetime="2016-06-26T09:00:00+08:00" pubdate>Sun 26 June 2016</time>  <span class="categories">
-    <a class='category' href='/category/leveldb.html'>LevelDB</a>
-  </span>
-  <span class="categories">
-    <a class="category" href="/tag/leveldb.html">LevelDB</a>,    <a class="category" href="/tag/skiplist.html">SkipList</a>  </span>
-</p><div class="sharing">
-</div>    </footer>
-  </article>
-
-</div>
-<aside class="sidebar">
-  <section>
-    <h1>Recent Posts</h1>
-    <ul id="recent_posts">
-      <li class="post">
-          <a href="/leveldb-memtable.html">LevelDB : MemTable</a>
-      </li>
-      <li class="post">
-          <a href="/leveldb-skiplist.html">LevelDB : SkipList</a>
-      </li>
-      <li class="post">
-          <a href="/leveldb-lru-cache.html">LevelDB : LRU Cache</a>
-      </li>
-      <li class="post">
-          <a href="/markdown-example.html">MarkDown Example</a>
-      </li>
-      <li class="post">
-          <a href="/linux-device-driver.html">Linux Device Driver</a>
-      </li>
-    </ul>
-  </section>
-  <section>
-      
-    <h1>Categories</h1>
-    <ul id="recent_posts">
-        <li><a href="/category/leveldb.html">LevelDB</a></li>
-        <li><a href="/category/linux.html">Linux</a></li>
-        <li><a href="/category/others.html">Others</a></li>
-    </ul>
-  </section>
- 
-
-  <section>
-  <h1>Tags</h1>
-    <a href="/tag/memtable.html">MemTable</a>,    <a href="/tag/markdown.html">markdown</a>,    <a href="/tag/ldd.html">LDD</a>,    <a href="/tag/driver.html">Driver</a>,    <a href="/tag/leveldb.html">LevelDB</a>,    <a href="/tag/hashtable.html">HashTable</a>,    <a href="/tag/skiplist.html">SkipList</a>,    <a href="/tag/lru-cache.html">LRU Cache</a>  </section>
+</pre></div>
 
 
-    <section>
-        <h1>Social</h1>
-        <ul>
-            <li><a href="#" target="_blank">You can add links in your config file</a></li>
-            <li><a href="#" target="_blank">Another social link</a></li>
-        </ul>
-    </section>
-    <section>
-        <h1>Blogroll</h1>
-        <ul>
-            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
-            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
-            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
-            <li><a href="#" target="_blank">You can modify those links in your config file</a></li>
-        </ul>
-    </section>
+<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
+    var align = "center",
+        indent = "0em",
+        linebreak = "false";
 
-</aside>    </div>
-  </div>
-  <footer role="contentinfo"><p>
-    Copyright &copy;  2014&ndash;2016  jinger &mdash;
-  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
-</p></footer>
-  <script src="/theme/js/modernizr-2.0.js"></script>
-  <script src="/theme/js/ender.js"></script>
-  <script src="/theme/js/octopress.js" type="text/javascript"></script>
-  <script type="text/javascript">
+    if (false) {
+        align = (screen.width < 768) ? "left" : align;
+        indent = (screen.width < 768) ? "0em" : indent;
+        linebreak = (screen.width < 768) ? 'true' : linebreak;
+    }
+
+    var mathjaxscript = document.createElement('script');
+    var location_protocol = (false) ? 'https' : document.location.protocol;
+    if (location_protocol !== 'http' && location_protocol !== 'https') location_protocol = 'https:';
+    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
+    mathjaxscript.type = 'text/javascript';
+    mathjaxscript.src = location_protocol + '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
+    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
+        "MathJax.Hub.Config({" +
+        "    config: ['MMLorHTML.js']," +
+        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
+        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
+        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
+        "    displayAlign: '"+ align +"'," +
+        "    displayIndent: '"+ indent +"'," +
+        "    showMathMenu: true," +
+        "    messageStyle: 'normal'," +
+        "    tex2jax: { " +
+        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
+        "        displayMath: [ ['$$','$$'] ]," +
+        "        processEscapes: true," +
+        "        preview: 'TeX'," +
+        "    }, " +
+        "    'HTML-CSS': { " +
+        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
+        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
+        "    }, " +
+        "}); " +
+        "if ('default' !== 'default') {" +
+            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
+                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
+                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
+                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
+                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
+                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
+            "});" +
+        "}";
+    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
+}
+</script>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "leveldb-skiplist.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
     var disqus_shortname = 'JingerCode';
-    var disqus_identifier = '/leveldb-skiplist.html';
-    var disqus_url = '/leveldb-skiplist.html';
-    var disqus_title = 'LevelDB : SkipList';
-    (function() {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-     })();
-  </script>
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
 </body>
 </html>

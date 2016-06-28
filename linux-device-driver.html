@@ -1,113 +1,117 @@
 <!DOCTYPE html>
-<!--[if IEMobile 7 ]><html class="no-js iem7"><![endif]-->
-<!--[if lt IE 9]><html class="no-js lte-ie8"><![endif]-->
-<!--[if (gt IE 8)|(gt IEMobile 7)|!(IEMobile)|!(IE)]><!--><html class="no-js" lang="en"><!--<![endif]-->
+<html lang="zh">
 <head>
-  <meta charset="utf-8">
-  <title>Linux Device Driver &mdash; Jinger's Blog</title>
-  <meta name="author" content="jinger">
+
+        <title>Linux Device Driver</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
 
 
 
 
-
-
-  <!-- http://t.co/dKP3o1e -->
-  <meta name="HandheldFriendly" content="True">
-  <meta name="MobileOptimized" content="320">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-
-
-    <link href="/favicon.png" rel="icon">
-
-  <link href="/theme/css/main.css" media="screen, projection"
-        rel="stylesheet" type="text/css">
-
-  <link href="//fonts.googleapis.com/css?family=PT+Serif:regular,italic,bold,bolditalic"
-        rel="stylesheet" type="text/css">
-  <link href="//fonts.googleapis.com/css?family=PT+Sans:regular,italic,bold,bolditalic"
-        rel="stylesheet" type="text/css">
 </head>
 
-<body>
-  <header role="banner"><hgroup>
-  <h1><a href="/">Jinger's Blog</a></h1>
-</hgroup></header>
-  <nav role="navigation"><ul class="subscription" data-subscription="rss">
-</ul>
+<body id="index" class="home">
 
 
-<ul class="main-navigation">
-      <li >
-        <a href="/category/leveldb.html">Leveldb</a>
-      </li>
-      <li class="active">
-        <a href="/category/linux.html">Linux</a>
-      </li>
-      <li >
-        <a href="/category/others.html">Others</a>
-      </li>
-</ul></nav>
-  <div id="main">
-    <div id="content">
-<div>
-  <article class="hentry" role="article">
-<header>
-      <h1 class="entry-title">Linux Device Driver</h1>
-    <p class="meta">
-<time datetime="2014-01-01T09:00:00+08:00" pubdate>Wed 01 January 2014</time>    </p>
-</header>
+    <div class="container">
 
-  <div class="entry-content"><h1>学习总结</h1>
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/linux-device-driver.html" rel="bookmark"
+                   title="Permalink to Linux Device Driver">Linux Device Driver</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2014-01-01T09:00:00+08:00">
+                Wed 01 January 2014
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>学习总结</h1>
 <h2>学习内核自带的文档</h2>
-<div class="highlight"><pre><span></span>昨天阅读了一下内核中的文档：
-README
-Documentation/HOWTO
-学到了不少东西。知道了一个网站 http://kernelnewbies.org,一些FAQ , 摘录如下
+<div class="highlight"><pre><span class="err">昨天阅读了一下内核中的文档：</span>
+<span class="n">README</span>
+<span class="n">Documentation</span><span class="o">/</span><span class="n">HOWTO</span>
+<span class="err">学到了不少东西。知道了一个网站</span> <span class="n">http:</span><span class="sr">//</span><span class="n">kernelnewbies</span><span class="o">.</span><span class="n">org</span><span class="p">,</span><span class="err">一些</span><span class="n">FAQ</span> <span class="p">,</span> <span class="err">摘录如下</span>
 </pre></div>
 
 
 <h3>Code Browsing</h3>
 <h4>cscope，tags</h4>
-<div class="highlight"><pre><span></span>原来内核中有生成 cscope和tags的脚本
-make cscope
-make tags
+<div class="highlight"><pre><span class="err">原来内核中有生成</span> <span class="n">cscope</span><span class="err">和</span><span class="n">tags</span><span class="err">的脚本</span>
+<span class="n">make</span> <span class="n">cscope</span>
+<span class="n">make</span> <span class="n">tags</span>
 
-给make加上V=1，可以看到哪些命令被执行。
-$ make cscope V=1
-  /bin/bash linux-2.6.32.63/scripts/tags.sh cscope
-.....
-+ cscope -b -f cscope.out
-可以看到调用的是 scripts/tags.sh 这个脚本。
+<span class="err">给</span><span class="n">make</span><span class="err">加上</span><span class="n">V</span><span class="o">=</span><span class="mi">1</span><span class="err">，可以看到哪些命令被执行。</span>
+<span class="nv">$</span> <span class="nv">make</span> <span class="n">cscope</span> <span class="n">V</span><span class="o">=</span><span class="mi">1</span>
+  <span class="sr">/bin/</span><span class="n">bash</span> <span class="n">linux</span><span class="o">-</span><span class="mf">2.6.32.63</span><span class="sr">/scripts/</span><span class="n">tags</span><span class="o">.</span><span class="n">sh</span> <span class="n">cscope</span>
+<span class="o">.....</span>
+<span class="o">+</span> <span class="n">cscope</span> <span class="o">-</span><span class="n">b</span> <span class="o">-</span><span class="n">f</span> <span class="n">cscope</span><span class="o">.</span><span class="n">out</span>
+<span class="err">可以看到调用的是</span> <span class="n">scripts</span><span class="o">/</span><span class="n">tags</span><span class="o">.</span><span class="n">sh</span> <span class="err">这个脚本。</span>
 </pre></div>
 
 
 <h4>find + grep</h4>
-<div class="highlight"><pre><span></span>查找结构体定义
-find . -name &#39;*.[chS]&#39; | xargs grep -EnH &quot;\W*struct\W+task_struct\W*{&quot;
-查找函数定义
-find . -name &#39;*.[chS]&#39; | xargs grep -EnH &quot;cdev_init\W*\(struct cdev&quot;
+<div class="highlight"><pre><span class="err">查找结构体定义</span>
+<span class="n">find</span> <span class="o">.</span> <span class="o">-</span><span class="n">name</span> <span class="s">&#39;*.[chS]&#39;</span> <span class="o">|</span> <span class="n">xargs</span> <span class="nb">grep</span> <span class="o">-</span><span class="n">EnH</span> <span class="s">&quot;\W*struct\W+task_struct\W*{&quot;</span>
+<span class="err">查找函数定义</span>
+<span class="n">find</span> <span class="o">.</span> <span class="o">-</span><span class="n">name</span> <span class="s">&#39;*.[chS]&#39;</span> <span class="o">|</span> <span class="n">xargs</span> <span class="nb">grep</span> <span class="o">-</span><span class="n">EnH</span> <span class="s">&quot;cdev_init\W*\(struct cdev&quot;</span>
 </pre></div>
 
 
 <h4>lxr    （很好的网站）</h4>
 <p><code>http://lxr.oss.org.cn/</code></p>
 <h3>编写好的驱动，怎么运行</h3>
-<div class="highlight"><pre><span></span>保证开发板内核/虚拟机内核 与 你编译驱动时的内核版本一样
+<div class="highlight"><pre><span class="err">保证开发板内核</span><span class="o">/</span><span class="err">虚拟机内核</span> <span class="err">与</span> <span class="err">你编译驱动时的内核版本一样</span>
 </pre></div>
 
 
 <h4>在开发板上运行</h4>
-<div class="highlight"><pre><span></span>我有个mini2440开发板，一般是在PC上使用交叉编译工具编译好之后，放到开发的文件系统上即可。（文件系统最好用网络文件系统，这样比较方便）
+<div class="highlight"><pre><span class="err">我有个</span><span class="n">mini2440</span><span class="err">开发板，一般是在</span><span class="n">PC</span><span class="err">上使用交叉编译工具编译好之后，放到开发的文件系统上即可。（文件系统最好用网络文件系统，这样比较方便）</span>
 </pre></div>
 
 
 <h4>建立一个虚拟机</h4>
-<div class="highlight"><pre><span></span>找一个内核为 2.6.32以下（因为我要以2.6.32为研究对象）的linux发行版本。fedora12是2.6.31。可以编译安装2.6.32内核，然后编写驱动测试。
-下载fedora 12:
+<div class="highlight"><pre><span class="err">找一个内核为</span> <span class="mf">2.6.32</span><span class="err">以下（因为我要以</span><span class="mf">2.6.32</span><span class="err">为研究对象）的</span><span class="n">linux</span><span class="err">发行版本。</span><span class="n">fedora12</span><span class="err">是</span><span class="mf">2.6.31</span><span class="err">。可以编译安装</span><span class="mf">2.6.32</span><span class="err">内核，然后编写驱动测试。</span>
+<span class="err">下载</span><span class="n">fedora</span> <span class="mi">12</span><span class="p">:</span>
 
-axel -n 6 http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/12/
-使用axel应该比wget快点。
+<span class="n">axel</span> <span class="o">-</span><span class="n">n</span> <span class="mi">6</span> <span class="n">http:</span><span class="sr">//</span><span class="n">archives</span><span class="o">.</span><span class="n">fedoraproject</span><span class="o">.</span><span class="n">org</span><span class="sr">/pub/</span><span class="n">archive</span><span class="sr">/fedora/</span><span class="n">linux</span><span class="sr">/releases/</span><span class="mi">12</span><span class="o">/</span>
+<span class="err">使用</span><span class="n">axel</span><span class="err">应该比</span><span class="n">wget</span><span class="err">快点。</span>
 </pre></div>
 
 
@@ -122,97 +126,103 @@ axel -n 6 http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/12
 <li><a href="http://examples.oreilly.com/9780596005900/">kernel 2.6.x</a></li>
 <li><a href="https://github.com/kerneltravel/ldd3-examples-3.x">kernel 3.x</a></li>
 <li><a href="https://github.com/4get/ldd3_examples">other</a></li>
-</ul></div>
-    <footer>
-<p class="meta">
-  <span class="byline author vcard">
-    Posted by <span class="fn">
-        hongjin.cao
-    </span>
-  </span>
-<time datetime="2014-01-01T09:00:00+08:00" pubdate>Wed 01 January 2014</time>  <span class="categories">
-    <a class='category' href='/category/linux.html'>Linux</a>
-  </span>
-  <span class="categories">
-    <a class="category" href="/tag/ldd.html">LDD</a>,    <a class="category" href="/tag/driver.html">Driver</a>  </span>
-</p><div class="sharing">
-</div>    </footer>
-  </article>
-
-</div>
-<aside class="sidebar">
-  <section>
-    <h1>Recent Posts</h1>
-    <ul id="recent_posts">
-      <li class="post">
-          <a href="/leveldb-memtable.html">LevelDB : MemTable</a>
-      </li>
-      <li class="post">
-          <a href="/leveldb-skiplist.html">LevelDB : SkipList</a>
-      </li>
-      <li class="post">
-          <a href="/leveldb-lru-cache.html">LevelDB : LRU Cache</a>
-      </li>
-      <li class="post">
-          <a href="/markdown-example.html">MarkDown Example</a>
-      </li>
-      <li class="post">
-          <a href="/linux-device-driver.html">Linux Device Driver</a>
-      </li>
-    </ul>
-  </section>
-  <section>
-      
-    <h1>Categories</h1>
-    <ul id="recent_posts">
-        <li><a href="/category/leveldb.html">LevelDB</a></li>
-        <li><a href="/category/linux.html">Linux</a></li>
-        <li><a href="/category/others.html">Others</a></li>
-    </ul>
-  </section>
- 
-
-  <section>
-  <h1>Tags</h1>
-    <a href="/tag/memtable.html">MemTable</a>,    <a href="/tag/markdown.html">markdown</a>,    <a href="/tag/ldd.html">LDD</a>,    <a href="/tag/driver.html">Driver</a>,    <a href="/tag/leveldb.html">LevelDB</a>,    <a href="/tag/hashtable.html">HashTable</a>,    <a href="/tag/skiplist.html">SkipList</a>,    <a href="/tag/lru-cache.html">LRU Cache</a>  </section>
+</ul>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "linux-device-driver.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
 
 
-    <section>
-        <h1>Social</h1>
-        <ul>
-            <li><a href="#" target="_blank">You can add links in your config file</a></li>
-            <li><a href="#" target="_blank">Another social link</a></li>
-        </ul>
-    </section>
-    <section>
-        <h1>Blogroll</h1>
-        <ul>
-            <li><a href="http://getpelican.com/" target="_blank">Pelican</a></li>
-            <li><a href="http://python.org/" target="_blank">Python.org</a></li>
-            <li><a href="http://jinja.pocoo.org/" target="_blank">Jinja2</a></li>
-            <li><a href="#" target="_blank">You can modify those links in your config file</a></li>
-        </ul>
-    </section>
+        </div><!-- /.eleven.columns -->
 
-</aside>    </div>
-  </div>
-  <footer role="contentinfo"><p>
-    Copyright &copy;  2014&ndash;2016  jinger &mdash;
-  <span class="credit">Powered by <a href="http://getpelican.com">Pelican</a></span>
-</p></footer>
-  <script src="/theme/js/modernizr-2.0.js"></script>
-  <script src="/theme/js/ender.js"></script>
-  <script src="/theme/js/octopress.js" type="text/javascript"></script>
-  <script type="text/javascript">
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
     var disqus_shortname = 'JingerCode';
-    var disqus_identifier = '/linux-device-driver.html';
-    var disqus_url = '/linux-device-driver.html';
-    var disqus_title = 'Linux Device Driver';
-    (function() {
-      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-      dsq.src = "//" + disqus_shortname + '.disqus.com/embed.js';
-      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-     })();
-  </script>
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
 </body>
 </html>
