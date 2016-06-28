@@ -290,43 +290,43 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 
 <p>其中Equal调用的是创建SkipList传入的比较器</p>
-<div class="highlight"><pre>  <span class="n">bool</span> <span class="n">Equal</span><span class="p">(</span><span class="n">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="n">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="n">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
+<div class="highlight"><pre>  <span class="n">bool</span> <span class="n">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
 </pre></div>
 
 
 <h2>插入操作</h2>
 <p>插入过程与单链表冲插入过程一样，需要得到前驱节点。而前驱节点的信息是在查找过程中确定的，保存在了prev数组中。</p>
-<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="n">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="n">void</span> <span class="n">SkipList</span><span class="sr">&lt;Key,Comparator&gt;</span><span class="o">::</span><span class="n">Insert</span><span class="p">(</span><span class="n">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
-  <span class="sr">//</span> <span class="n">TODO</span><span class="p">(</span><span class="n">opt</span><span class="p">):</span> <span class="n">We</span> <span class="n">can</span> <span class="k">use</span> <span class="n">a</span> <span class="n">barrier</span><span class="o">-</span><span class="n">free</span> <span class="n">variant</span> <span class="n">of</span> <span class="n">FindGreaterOrEqual</span><span class="p">()</span>
-  <span class="sr">//</span> <span class="n">here</span> <span class="n">since</span> <span class="n">Insert</span><span class="p">()</span> <span class="n">is</span> <span class="n">externally</span> <span class="n">synchronized</span><span class="o">.</span>
+<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<span class="kt">void</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Insert</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// TODO(opt): We can use a barrier-free variant of FindGreaterOrEqual()</span>
+  <span class="c1">// here since Insert() is externally synchronized.</span>
   <span class="n">Node</span><span class="o">*</span> <span class="n">prev</span><span class="p">[</span><span class="n">kMaxHeight</span><span class="p">];</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">prev</span><span class="p">);</span> <span class="sr">//</span> <span class="err">进行查找</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">prev</span><span class="p">);</span> <span class="c1">// 进行查找</span>
 
-  <span class="sr">//</span> <span class="n">Our</span> <span class="n">data</span> <span class="n">structure</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">allow</span> <span class="n">duplicate</span> <span class="n">insertion</span>
-  <span class="n">assert</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="n">NULL</span> <span class="o">||</span> <span class="o">!</span><span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">));</span> <span class="sr">//</span> <span class="err">不允许插入重复数据</span>
+  <span class="c1">// Our data structure does not allow duplicate insertion</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">x</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">||</span> <span class="o">!</span><span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">));</span> <span class="c1">// 不允许插入重复数据</span>
 
-  <span class="nb">int</span> <span class="n">height</span> <span class="o">=</span> <span class="n">RandomHeight</span><span class="p">();</span>   <span class="sr">//</span> <span class="err">生成随机的高度</span><span class="n">height</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">height</span> <span class="o">&gt;</span> <span class="n">GetMaxHeight</span><span class="p">())</span> <span class="p">{</span> <span class="sr">//</span> <span class="err">如果</span><span class="n">height</span><span class="err">大于最大高度，将增加层次中的前驱设为</span><span class="n">head</span>
-    <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">GetMaxHeight</span><span class="p">();</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">int</span> <span class="n">height</span> <span class="o">=</span> <span class="n">RandomHeight</span><span class="p">();</span>   <span class="c1">// 生成随机的高度height</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">height</span> <span class="o">&gt;</span> <span class="n">GetMaxHeight</span><span class="p">())</span> <span class="p">{</span> <span class="c1">// 如果height大于最大高度，将增加层次中的前驱设为head</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="n">GetMaxHeight</span><span class="p">();</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
       <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">head_</span><span class="p">;</span>
     <span class="p">}</span>
-    <span class="sr">//</span><span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;Change height from %d to %d\n&quot;</span><span class="p">,</span> <span class="n">max_height_</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>
+    <span class="c1">//fprintf(stderr, &quot;Change height from %d to %d\n&quot;, max_height_, height);</span>
 
-    <span class="sr">//</span> <span class="n">It</span> <span class="n">is</span> <span class="n">ok</span> <span class="n">to</span> <span class="n">mutate</span> <span class="n">max_height_</span> <span class="n">without</span> <span class="n">any</span> <span class="n">synchronization</span>
-    <span class="sr">//</span> <span class="n">with</span> <span class="n">concurrent</span> <span class="n">readers</span><span class="o">.</span>  <span class="n">A</span> <span class="n">concurrent</span> <span class="n">reader</span> <span class="n">that</span> <span class="n">observes</span>
-    <span class="sr">//</span> <span class="n">the</span> <span class="k">new</span> <span class="n">value</span> <span class="n">of</span> <span class="n">max_height_</span> <span class="n">will</span> <span class="n">see</span> <span class="n">either</span> <span class="n">the</span> <span class="n">old</span> <span class="n">value</span> <span class="n">of</span>
-    <span class="sr">//</span> <span class="k">new</span> <span class="n">level</span> <span class="n">pointers</span> <span class="n">from</span> <span class="n">head_</span> <span class="p">(</span><span class="n">NULL</span><span class="p">),</span> <span class="ow">or</span> <span class="n">a</span> <span class="k">new</span> <span class="n">value</span> <span class="n">set</span> <span class="n">in</span>
-    <span class="sr">//</span> <span class="n">the</span> <span class="n">loop</span> <span class="n">below</span><span class="o">.</span>  <span class="n">In</span> <span class="n">the</span> <span class="n">former</span> <span class="k">case</span> <span class="n">the</span> <span class="n">reader</span> <span class="n">will</span>
-    <span class="sr">//</span> <span class="n">immediately</span> <span class="n">drop</span> <span class="n">to</span> <span class="n">the</span> <span class="k">next</span> <span class="n">level</span> <span class="n">since</span> <span class="n">NULL</span> <span class="n">sorts</span> <span class="n">after</span> <span class="n">all</span>
-    <span class="sr">//</span> <span class="nb">keys</span><span class="o">.</span>  <span class="n">In</span> <span class="n">the</span> <span class="n">latter</span> <span class="k">case</span> <span class="n">the</span> <span class="n">reader</span> <span class="n">will</span> <span class="k">use</span> <span class="n">the</span> <span class="k">new</span> <span class="n">node</span><span class="o">.</span>
-    <span class="n">max_height_</span><span class="o">.</span><span class="n">NoBarrier_Store</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="sr">&lt;void*&gt;</span><span class="p">(</span><span class="n">height</span><span class="p">));</span> <span class="sr">//</span> <span class="err">更新当前高度</span><span class="n">max_height_</span>
+    <span class="c1">// It is ok to mutate max_height_ without any synchronization</span>
+    <span class="c1">// with concurrent readers.  A concurrent reader that observes</span>
+    <span class="c1">// the new value of max_height_ will see either the old value of</span>
+    <span class="c1">// new level pointers from head_ (NULL), or a new value set in</span>
+    <span class="c1">// the loop below.  In the former case the reader will</span>
+    <span class="c1">// immediately drop to the next level since NULL sorts after all</span>
+    <span class="c1">// keys.  In the latter case the reader will use the new node.</span>
+    <span class="n">max_height_</span><span class="p">.</span><span class="n">NoBarrier_Store</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="kt">void</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">height</span><span class="p">));</span> <span class="c1">// 更新当前高度max_height_</span>
   <span class="p">}</span>
 
-  <span class="n">x</span> <span class="o">=</span> <span class="n">NewNode</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>          <span class="sr">//</span> <span class="err">生成一个新节点</span>
-  <span class="k">for</span> <span class="p">(</span><span class="nb">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span> <span class="sr">//</span> <span class="err">插入该节点</span>
-    <span class="sr">//</span> <span class="n">NoBarrier_SetNext</span><span class="p">()</span> <span class="n">suffices</span> <span class="n">since</span> <span class="n">we</span> <span class="n">will</span> <span class="n">add</span> <span class="n">a</span> <span class="n">barrier</span> <span class="n">when</span>
-    <span class="sr">//</span> <span class="n">we</span> <span class="n">publish</span> <span class="n">a</span> <span class="n">pointer</span> <span class="n">to</span> <span class="s">&quot;x&quot;</span> <span class="n">in</span> <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span>
+  <span class="n">x</span> <span class="o">=</span> <span class="n">NewNode</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">height</span><span class="p">);</span>          <span class="c1">// 生成一个新节点</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">height</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span> <span class="c1">// 插入该节点</span>
+    <span class="c1">// NoBarrier_SetNext() suffices since we will add a barrier when</span>
+    <span class="c1">// we publish a pointer to &quot;x&quot; in prev[i].</span>
     <span class="n">x</span><span class="o">-&gt;</span><span class="n">NoBarrier_SetNext</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">NoBarrier_Next</span><span class="p">(</span><span class="n">i</span><span class="p">));</span>
     <span class="n">prev</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">-&gt;</span><span class="n">SetNext</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
   <span class="p">}</span>
@@ -337,7 +337,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 <h1>可供单独测试的代码</h1>
 <h2>C++</h2>
 <p>下面的代码是从LevelDB中抽离出来的，去掉了内存池arena的使用，去掉了并发控制、内存屏障等，存在的问题是动态申请的堆资源没有释放。不过不影响理解skiplist。</p>
-<div class="highlight"><pre><span class="nv">$</span> <span class="nv">g</span><span class="o">++</span> <span class="o">-</span><span class="n">Wall</span> <span class="o">-</span><span class="n">O2</span> <span class="n">skiplist_test</span><span class="o">.</span><span class="n">cc</span> <span class="o">-</span><span class="n">o</span> <span class="n">test</span>
+<div class="highlight"><pre><span class="nv">$ </span>g++ -Wall -O2 skiplist_test.cc -o <span class="nb">test</span>
 </pre></div>
 
 
@@ -760,7 +760,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 <h2>c</h2>
 <p>c语言版本大体上是对c++版本的“翻译”</p>
-<div class="highlight"><pre><span class="nv">$gcc</span> <span class="n">skiplist</span><span class="o">.</span><span class="n">c</span> <span class="o">-</span><span class="n">o</span> <span class="n">sl</span>
+<div class="highlight"><pre><span class="nv">$gcc</span> skiplist.c -o sl
 </pre></div>
 
 
