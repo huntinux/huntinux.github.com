@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>LevelDB : MemTable</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/leveldb-memtable.html" rel="bookmark"
+                   title="Permalink to LevelDB : MemTable">LevelDB : MemTable</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-06-28T09:00:00+08:00">
+                Tue 28 June 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>引文</h1>
+<blockquote>
+<ol>
+<li>http://blog.csdn.net/xuqianghit/article/details/6948164</li>
+<li>http://mingxinglai.com/cn/2013/01/leveldb-memtable/</li>
+</ol>
+</blockquote>
+<p>下面是我结合引文的学习记录，仅用于笔记作用，因大部分出自引文，读者可以移步引文进行学习。</p>
+<h1>MemTable的作用</h1>
+<p>以下内容摘自引文2：</p>
+<blockquote>
+<p>在levelDB中所有KV数据都是存储在Memtable，Immutable Memtable和SSTable中的，Immutable Memtable从结构上讲和Memtable是完全一样的，区别仅仅在于其是只读的，不允许写入操作，而Memtable则是允许写入和读取的。当Memtable写入的数据占用内存到达指定数量，则自动转换为Immutable Memtable，等待Dump到磁盘中，系统会自动生成新的Memtable供写操作写入新数据，理解了Memtable，那么Immutable Memtable自然不在话下。
+LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操作接口，但是事实上Memtable并不存在真正的删除操作，删除某个Key的Value在Memtable内是作为插入一条记录实施的，但是会打上一个Key的删除标记，真正的删除操作是Lazy的，会在以后的Compaction过程中去掉这个KV。 需要注意的是，LevelDb的Memtable中KV对是根据Key大小有序存储的，在系统插入新的KV时，LevelDb要把这个KV插到合适的位置上以保持这种Key有序性。其实，LevelDb的Memtable类只是一个接口类，真正的操作是通过背后的SkipList来做的，包括插入操作和读取操作等，所以Memtable的核心数据结构是一个SkipList。</p>
+</blockquote>
+<p>MemTable可以看做是对SkipList的封装。</p>
+<h1>成员变量</h1>
+<p>首先看看MemTable的成员变量：</p>
+<div class="highlight"><pre><span></span>  <span class="k">typedef</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span> <span class="n">KeyComparator</span><span class="o">&gt;</span> <span class="n">Table</span><span class="p">;</span>
+  <span class="n">KeyComparator</span> <span class="n">comparator_</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">refs_</span><span class="p">;</span>    <span class="c1">// 引用计数</span>
+  <span class="n">Arena</span> <span class="n">arena_</span><span class="p">;</span> <span class="c1">// 内存池</span>
+  <span class="n">Table</span> <span class="n">table_</span><span class="p">;</span> <span class="c1">// Table就是SkipList&lt;const char*, KeyComparator&gt;</span>
+</pre></div>
+
+
+<h1>添加/查询接口</h1>
+<p>暴露出来的添加、查询接口：</p>
+<div class="highlight"><pre><span></span>  <span class="c1">// Add an entry into memtable that maps key to value at the</span>
+  <span class="c1">// specified sequence number and with the specified type.</span>
+  <span class="c1">// Typically value will be empty if type==kTypeDeletion.</span>
+  <span class="kt">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">SequenceNumber</span> <span class="n">seq</span><span class="p">,</span> <span class="n">ValueType</span> <span class="n">type</span><span class="p">,</span>
+           <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+           <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">);</span>
+
+  <span class="c1">// If memtable contains a value for key, store it in *value and return true.</span>
+  <span class="c1">// If memtable contains a deletion for key, store a NotFound() error</span>
+  <span class="c1">// in *status and return true.</span>
+  <span class="c1">// Else, return false.</span>
+  <span class="kt">bool</span> <span class="nf">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">LookupKey</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="n">Status</span><span class="o">*</span> <span class="n">s</span><span class="p">);</span>
+</pre></div>
+
+
+<h2>添加</h2>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">MemTable</span><span class="o">::</span><span class="n">Add</span><span class="p">(</span><span class="n">SequenceNumber</span> <span class="n">s</span><span class="p">,</span> <span class="n">ValueType</span> <span class="n">type</span><span class="p">,</span>
+                   <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
+                   <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Format of an entry is concatenation of:</span>
+  <span class="c1">//  key_size     : varint32 of internal_key.size()</span>
+  <span class="c1">//  key bytes    : char[internal_key.size()]</span>
+  <span class="c1">//  value_size   : varint32 of value.size()</span>
+  <span class="c1">//  value bytes  : char[value.size()]</span>
+  <span class="kt">size_t</span> <span class="n">key_size</span> <span class="o">=</span> <span class="n">key</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+  <span class="kt">size_t</span> <span class="n">val_size</span> <span class="o">=</span> <span class="n">value</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+  <span class="kt">size_t</span> <span class="n">internal_key_size</span> <span class="o">=</span> <span class="n">key_size</span> <span class="o">+</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">size_t</span> <span class="n">encoded_len</span> <span class="o">=</span>
+      <span class="n">VarintLength</span><span class="p">(</span><span class="n">internal_key_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">internal_key_size</span> <span class="o">+</span>
+      <span class="n">VarintLength</span><span class="p">(</span><span class="n">val_size</span><span class="p">)</span> <span class="o">+</span> <span class="n">val_size</span><span class="p">;</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">buf</span> <span class="o">=</span> <span class="n">arena_</span><span class="p">.</span><span class="n">Allocate</span><span class="p">(</span><span class="n">encoded_len</span><span class="p">);</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">p</span> <span class="o">=</span> <span class="n">EncodeVarint32</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">internal_key_size</span><span class="p">);</span>
+  <span class="n">memcpy</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">key</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">key_size</span><span class="p">);</span>
+  <span class="n">p</span> <span class="o">+=</span> <span class="n">key_size</span><span class="p">;</span>
+  <span class="n">EncodeFixed64</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="p">(</span><span class="n">s</span> <span class="o">&lt;&lt;</span> <span class="mi">8</span><span class="p">)</span> <span class="o">|</span> <span class="n">type</span><span class="p">);</span> <span class="c1">// s 和 type 编码成8个字节</span>
+  <span class="n">p</span> <span class="o">+=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="n">p</span> <span class="o">=</span> <span class="n">EncodeVarint32</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">val_size</span><span class="p">);</span>
+  <span class="n">memcpy</span><span class="p">(</span><span class="n">p</span><span class="p">,</span> <span class="n">value</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">val_size</span><span class="p">);</span>
+  <span class="n">assert</span><span class="p">((</span><span class="n">p</span> <span class="o">+</span> <span class="n">val_size</span><span class="p">)</span> <span class="o">-</span> <span class="n">buf</span> <span class="o">==</span> <span class="n">encoded_len</span><span class="p">);</span>
+  <span class="n">table_</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span><span class="n">buf</span><span class="p">);</span> <span class="c1">// 插入到SkipList中</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>将SequenceNumber, ValueType, key, value编码成一定的格式放在buf中，最后插入到table中。
+编码格式为：<code>| internal_key_size | internal_key |  val_size | value |</code>
+其中internal_key 是由 key，s，type组成的，而s 和 type被编码成8个字节, 所以：internal_key_size = key.size() + 8。编码完成后，将buf插入到table中。</p>
+<h2>查询</h2>
+<div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">MemTable</span><span class="o">::</span><span class="n">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">LookupKey</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="n">Status</span><span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">Slice</span> <span class="n">memkey</span> <span class="o">=</span> <span class="n">key</span><span class="p">.</span><span class="n">memtable_key</span><span class="p">();</span>
+  <span class="n">Table</span><span class="o">::</span><span class="n">Iterator</span> <span class="n">iter</span><span class="p">(</span><span class="o">&amp;</span><span class="n">table_</span><span class="p">);</span>
+  <span class="n">iter</span><span class="p">.</span><span class="n">Seek</span><span class="p">(</span><span class="n">memkey</span><span class="p">.</span><span class="n">data</span><span class="p">());</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">iter</span><span class="p">.</span><span class="n">Valid</span><span class="p">())</span> <span class="p">{</span>
+    <span class="c1">// entry format is:</span>
+    <span class="c1">//    klength  varint32</span>
+    <span class="c1">//    userkey  char[klength]</span>
+    <span class="c1">//    tag      uint64</span>
+    <span class="c1">//    vlength  varint32</span>
+    <span class="c1">//    value    char[vlength]</span>
+    <span class="c1">// Check that it belongs to same user key.  We do not check the</span>
+    <span class="c1">// sequence number since the Seek() call above should have skipped</span>
+    <span class="c1">// all entries with overly large sequence numbers.</span>
+    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">iter</span><span class="p">.</span><span class="n">key</span><span class="p">();</span>
+    <span class="kt">uint32_t</span> <span class="n">key_length</span><span class="p">;</span>
+    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key_ptr</span> <span class="o">=</span> <span class="n">GetVarint32Ptr</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">entry</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key_length</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">comparator_</span><span class="p">.</span><span class="n">comparator</span><span class="p">.</span><span class="n">user_comparator</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Compare</span><span class="p">(</span>
+            <span class="n">Slice</span><span class="p">(</span><span class="n">key_ptr</span><span class="p">,</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">),</span>
+            <span class="n">key</span><span class="p">.</span><span class="n">user_key</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+      <span class="c1">// Correct user key</span>
+      <span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">DecodeFixed64</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">);</span>
+      <span class="k">switch</span> <span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">tag</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">))</span> <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">kTypeValue</span><span class="p">:</span> <span class="p">{</span>
+          <span class="n">Slice</span> <span class="n">v</span> <span class="o">=</span> <span class="n">GetLengthPrefixedSlice</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span><span class="p">);</span>
+          <span class="n">value</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+          <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+        <span class="p">}</span>
+        <span class="k">case</span> <span class="nl">kTypeDeletion</span><span class="p">:</span>
+          <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="n">Status</span><span class="o">::</span><span class="n">NotFound</span><span class="p">(</span><span class="n">Slice</span><span class="p">());</span>
+          <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>该函数根据key在table中查找，找到时返回一个迭代器iter，那么entry就指向key（即上面Add函数中的buf）</p>
+<div class="highlight"><pre><span></span>    const char* entry = iter.key();
+</pre></div>
+
+
+<p>buf的格式在上面总结过，是这样的：</p>
+<p><code>| internal_key_size | internal_key |  val_size | value |</code></p>
+<p>其中我们要查找的key是internal_key的一部分，而internal_key的构成是这样事儿的：</p>
+<p><code>| key | SequenceNumber | Type |</code></p>
+<p>其中SequenceNumber和Type被打包成一个8字节组。</p>
+<p>那么找到key的过程是这样的：
+首先要取出internal_key_size。还记得varint是个边长编码吗？但是varint最长不会超过5字节，所以函数<code>GetVarint32Ptr</code>可以从entry的前5个字节解码出internal_key_size。注意，该函数能够处理internal_key_size不足5个字节的情况，原因是：由于varint的编码方式是使用每个字节的第8位表示是否有后续字节，所以该函数可以处理变长的varint。^_^。同时，该函数将返回<code>internal_key</code>的首地址。</p>
+<div class="highlight"><pre><span></span>const char* key_ptr = GetVarint32Ptr(entry, entry+5, &amp;key_length);
+</pre></div>
+
+
+<p>然后比较要查找的key和找到的key是否相同，其中减去的8字节是上面提到的<code>SequenceNumber+Type</code>，它们不参与比较过程：</p>
+<div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">comparator_</span><span class="p">.</span><span class="n">comparator</span><span class="p">.</span><span class="n">user_comparator</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Compare</span><span class="p">(</span>
+            <span class="n">Slice</span><span class="p">(</span><span class="n">key_ptr</span><span class="p">,</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">),</span> 
+            <span class="n">key</span><span class="p">.</span><span class="n">user_key</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> 
+    <span class="p">{...}</span>
+</pre></div>
+
+
+<p>最后，如果Type是<code>kTypeValue</code>，那么就返回value部分；如果Type是<code>kTypeDeletion</code>，表示该数据被标记为删除类型，返回NotFound。</p>
+<div class="highlight"><pre><span></span><span class="o">//</span> <span class="err">获得</span> <span class="nt">SequenceNumber</span> <span class="o">+</span> <span class="nt">Type</span> <span class="o">,</span> <span class="nt">Type</span><span class="err">是最后一个字节，即下面的</span> <span class="nt">tag</span> <span class="o">&amp;</span> <span class="nt">0xff</span><span class="err">。</span>
+<span class="nt">const</span> <span class="nt">uint64_t</span> <span class="nt">tag</span> <span class="o">=</span> <span class="nt">DecodeFixed64</span><span class="o">(</span><span class="nt">key_ptr</span> <span class="o">+</span> <span class="nt">key_length</span> <span class="nt">-</span> <span class="nt">8</span><span class="o">);</span>
+<span class="nt">switch</span> <span class="o">(</span><span class="nt">static_cast</span><span class="o">&lt;</span><span class="nt">ValueType</span><span class="o">&gt;(</span><span class="nt">tag</span> <span class="o">&amp;</span> <span class="nt">0xff</span><span class="o">))</span> <span class="p">{</span>
+  <span class="n">case</span> <span class="n">kTypeValue</span><span class="o">:</span> <span class="err">{</span>
+    <span class="n">Slice</span> <span class="n">v</span> <span class="o">=</span> <span class="n">GetLengthPrefixedSlice</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span><span class="p">);</span>
+    <span class="n">value</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">v</span><span class="o">.</span><span class="n">data</span><span class="p">()</span><span class="o">,</span> <span class="n">v</span><span class="o">.</span><span class="nb">size</span><span class="p">());</span>
+    <span class="n">return</span> <span class="n">true</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="nt">case</span> <span class="nt">kTypeDeletion</span><span class="o">:</span>
+    <span class="o">*</span><span class="nt">s</span> <span class="o">=</span> <span class="nt">Status</span><span class="o">:</span><span class="nd">:NotFound</span><span class="o">(</span><span class="nt">Slice</span><span class="o">());</span>
+    <span class="nt">return</span> <span class="nt">true</span><span class="o">;</span>
+<span class="err">}</span>
+</pre></div>
+
+
+<h1>LookupKey</h1>
+<p>分析完上面的内容，有疑问如下：</p>
+<ol>
+<li>
+<p>为什么感觉有两次比较过程？一次在<code>seek()</code>, 一次在<code>Compare()</code>。
+原因是这样的： 这要从SkipList说起，还记得SkipList的<code>FindGreatorOrEqual</code>函数吗，seek在底层就是使用的该函数，函数返回的是大于或等于要查找值的元素。因此需要再使用Compare比较一下啦。</p>
+</li>
+<li>
+<p>LookupKey是做什么的？ SequenceNumber的作用是什么？
+LookupKey是helper类，将用户查询使用的userkey转化为internal_key的表示方式</p>
+</li>
+</ol>
+<p>成员变量：构成是这样的 <code>| klength | userkey | tag |</code></p>
+<div class="highlight"><pre><span></span>  // We construct a char array of the form:
+  //    klength  varint32               &lt;-- start_
+  //    userkey  char[klength]          &lt;-- kstart_
+  //    tag      uint64
+  //                                    &lt;-- end_
+  // The array is a suitable MemTable key.
+  // The suffix starting with &quot;userkey&quot; can be used as an InternalKey.
+  const char* start_;
+  const char* kstart_;
+  const char* end_;
+  char space_[200];      // Avoid allocation for short keys
+</pre></div>
+
+
+<p>userkey是用户要查找的key，那么LookupKey将userkey转换为内部表示方式：
+<code>| key_length | key | tag |</code>,其中tag就是SequenceNumber+Type。当key比较短时，使用space_空间，否则在堆上申请，在析构时释放。</p>
+<p>构造函数是这样的：</p>
+<div class="highlight"><pre><span></span><span class="n">LookupKey</span><span class="o">::</span><span class="n">LookupKey</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">user_key</span><span class="p">,</span> <span class="n">SequenceNumber</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+  <span class="kt">size_t</span> <span class="n">usize</span> <span class="o">=</span> <span class="n">user_key</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+  <span class="kt">size_t</span> <span class="n">needed</span> <span class="o">=</span> <span class="n">usize</span> <span class="o">+</span> <span class="mi">13</span><span class="p">;</span>  <span class="c1">// A conservative estimate</span>
+  <span class="kt">char</span><span class="o">*</span> <span class="n">dst</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">needed</span> <span class="o">&lt;=</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">space_</span><span class="p">))</span> <span class="p">{</span> <span class="c1">// 决定使用space_还是在堆申请</span>
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">space_</span><span class="p">;</span>
+  <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+    <span class="n">dst</span> <span class="o">=</span> <span class="n">new</span> <span class="kt">char</span><span class="p">[</span><span class="n">needed</span><span class="p">];</span>
+  <span class="p">}</span>
+  <span class="n">start_</span> <span class="o">=</span> <span class="n">dst</span><span class="p">;</span>
+  <span class="n">dst</span> <span class="o">=</span> <span class="n">EncodeVarint32</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">usize</span> <span class="o">+</span> <span class="mi">8</span><span class="p">);</span> <span class="c1">// 额外的8字节是给tag使用，即SequenceNumber+Type</span>
+  <span class="n">kstart_</span> <span class="o">=</span> <span class="n">dst</span><span class="p">;</span>
+  <span class="n">memcpy</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">user_key</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">usize</span><span class="p">);</span>
+  <span class="n">dst</span> <span class="o">+=</span> <span class="n">usize</span><span class="p">;</span>
+  <span class="n">EncodeFixed64</span><span class="p">(</span><span class="n">dst</span><span class="p">,</span> <span class="n">PackSequenceAndType</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="n">kValueTypeForSeek</span><span class="p">));</span>
+  <span class="n">dst</span> <span class="o">+=</span> <span class="mi">8</span><span class="p">;</span>
+  <span class="n">end_</span> <span class="o">=</span> <span class="n">dst</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>目前，SequenceNumber没有理解，只是感觉和snapshot有关系。</p>
+<h1>其他总结</h1>
+<p>此外，LevelDB中禁止类被复制的方法都是声明<code>拷贝构造函数</code>和<code>赋值操作符</code>为private，并且只提供声明，而不提供定义。（C++11中可以使用=delete）</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "leveldb-memtable.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
