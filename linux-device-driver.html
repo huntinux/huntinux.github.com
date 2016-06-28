@@ -64,54 +64,54 @@
             <div class="entry-content">
               <h1>学习总结</h1>
 <h2>学习内核自带的文档</h2>
-<div class="highlight"><pre><span></span>昨天阅读了一下内核中的文档：
-README
-Documentation/HOWTO
-学到了不少东西。知道了一个网站 http://kernelnewbies.org,一些FAQ , 摘录如下
+<div class="highlight"><pre><span class="err">昨天阅读了一下内核中的文档：</span>
+<span class="n">README</span>
+<span class="n">Documentation</span><span class="o">/</span><span class="n">HOWTO</span>
+<span class="err">学到了不少东西。知道了一个网站</span> <span class="n">http:</span><span class="sr">//</span><span class="n">kernelnewbies</span><span class="o">.</span><span class="n">org</span><span class="p">,</span><span class="err">一些</span><span class="n">FAQ</span> <span class="p">,</span> <span class="err">摘录如下</span>
 </pre></div>
 
 
 <h3>Code Browsing</h3>
 <h4>cscope，tags</h4>
-<div class="highlight"><pre><span></span>原来内核中有生成 cscope和tags的脚本
-make cscope
-make tags
+<div class="highlight"><pre><span class="err">原来内核中有生成</span> <span class="n">cscope</span><span class="err">和</span><span class="n">tags</span><span class="err">的脚本</span>
+<span class="n">make</span> <span class="n">cscope</span>
+<span class="n">make</span> <span class="n">tags</span>
 
-给make加上V=1，可以看到哪些命令被执行。
-$ make cscope V=1
-  /bin/bash linux-2.6.32.63/scripts/tags.sh cscope
-.....
-+ cscope -b -f cscope.out
-可以看到调用的是 scripts/tags.sh 这个脚本。
+<span class="err">给</span><span class="n">make</span><span class="err">加上</span><span class="n">V</span><span class="o">=</span><span class="mi">1</span><span class="err">，可以看到哪些命令被执行。</span>
+<span class="nv">$</span> <span class="nv">make</span> <span class="n">cscope</span> <span class="n">V</span><span class="o">=</span><span class="mi">1</span>
+  <span class="sr">/bin/</span><span class="n">bash</span> <span class="n">linux</span><span class="o">-</span><span class="mf">2.6.32.63</span><span class="sr">/scripts/</span><span class="n">tags</span><span class="o">.</span><span class="n">sh</span> <span class="n">cscope</span>
+<span class="o">.....</span>
+<span class="o">+</span> <span class="n">cscope</span> <span class="o">-</span><span class="n">b</span> <span class="o">-</span><span class="n">f</span> <span class="n">cscope</span><span class="o">.</span><span class="n">out</span>
+<span class="err">可以看到调用的是</span> <span class="n">scripts</span><span class="o">/</span><span class="n">tags</span><span class="o">.</span><span class="n">sh</span> <span class="err">这个脚本。</span>
 </pre></div>
 
 
 <h4>find + grep</h4>
-<div class="highlight"><pre><span></span>查找结构体定义
-find . -name &#39;*.[chS]&#39; | xargs grep -EnH &quot;\W*struct\W+task_struct\W*{&quot;
-查找函数定义
-find . -name &#39;*.[chS]&#39; | xargs grep -EnH &quot;cdev_init\W*\(struct cdev&quot;
+<div class="highlight"><pre><span class="err">查找结构体定义</span>
+<span class="n">find</span> <span class="o">.</span> <span class="o">-</span><span class="n">name</span> <span class="s">&#39;*.[chS]&#39;</span> <span class="o">|</span> <span class="n">xargs</span> <span class="nb">grep</span> <span class="o">-</span><span class="n">EnH</span> <span class="s">&quot;\W*struct\W+task_struct\W*{&quot;</span>
+<span class="err">查找函数定义</span>
+<span class="n">find</span> <span class="o">.</span> <span class="o">-</span><span class="n">name</span> <span class="s">&#39;*.[chS]&#39;</span> <span class="o">|</span> <span class="n">xargs</span> <span class="nb">grep</span> <span class="o">-</span><span class="n">EnH</span> <span class="s">&quot;cdev_init\W*\(struct cdev&quot;</span>
 </pre></div>
 
 
 <h4>lxr    （很好的网站）</h4>
 <p><code>http://lxr.oss.org.cn/</code></p>
 <h3>编写好的驱动，怎么运行</h3>
-<div class="highlight"><pre><span></span>保证开发板内核/虚拟机内核 与 你编译驱动时的内核版本一样
+<div class="highlight"><pre><span class="err">保证开发板内核</span><span class="o">/</span><span class="err">虚拟机内核</span> <span class="err">与</span> <span class="err">你编译驱动时的内核版本一样</span>
 </pre></div>
 
 
 <h4>在开发板上运行</h4>
-<div class="highlight"><pre><span></span>我有个mini2440开发板，一般是在PC上使用交叉编译工具编译好之后，放到开发的文件系统上即可。（文件系统最好用网络文件系统，这样比较方便）
+<div class="highlight"><pre><span class="err">我有个</span><span class="n">mini2440</span><span class="err">开发板，一般是在</span><span class="n">PC</span><span class="err">上使用交叉编译工具编译好之后，放到开发的文件系统上即可。（文件系统最好用网络文件系统，这样比较方便）</span>
 </pre></div>
 
 
 <h4>建立一个虚拟机</h4>
-<div class="highlight"><pre><span></span>找一个内核为 2.6.32以下（因为我要以2.6.32为研究对象）的linux发行版本。fedora12是2.6.31。可以编译安装2.6.32内核，然后编写驱动测试。
-下载fedora 12:
+<div class="highlight"><pre><span class="err">找一个内核为</span> <span class="mf">2.6.32</span><span class="err">以下（因为我要以</span><span class="mf">2.6.32</span><span class="err">为研究对象）的</span><span class="n">linux</span><span class="err">发行版本。</span><span class="n">fedora12</span><span class="err">是</span><span class="mf">2.6.31</span><span class="err">。可以编译安装</span><span class="mf">2.6.32</span><span class="err">内核，然后编写驱动测试。</span>
+<span class="err">下载</span><span class="n">fedora</span> <span class="mi">12</span><span class="p">:</span>
 
-axel -n 6 http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/12/
-使用axel应该比wget快点。
+<span class="n">axel</span> <span class="o">-</span><span class="n">n</span> <span class="mi">6</span> <span class="n">http:</span><span class="sr">//</span><span class="n">archives</span><span class="o">.</span><span class="n">fedoraproject</span><span class="o">.</span><span class="n">org</span><span class="sr">/pub/</span><span class="n">archive</span><span class="sr">/fedora/</span><span class="n">linux</span><span class="sr">/releases/</span><span class="mi">12</span><span class="o">/</span>
+<span class="err">使用</span><span class="n">axel</span><span class="err">应该比</span><span class="n">wget</span><span class="err">快点。</span>
 </pre></div>
 
 
