@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>LevelDB : LRU Cache</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/leveldb-lru-cache.html" rel="bookmark"
+                   title="Permalink to LevelDB : LRU Cache">LevelDB : LRU Cache</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-06-24T09:00:00+08:00">
+                Fri 24 June 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <blockquote>
+<p>关于LRU Cache</p>
+<ol>
+<li>
+<p>http://blog.csdn.net/huntinux/article/details/39290833</p>
+</li>
+<li>
+<p>http://www.cnblogs.com/liuhao/archive/2012/11/29/2795455.html</p>
+</li>
+<li>
+<p>http://blog.itpub.net/26239116/viewspace-1842049/ （重点参考）</p>
+</li>
+<li>
+<p>http://mingxinglai.com/cn/2013/01/leveldb-cache/ (重要参考，建议移步这里)</p>
+</li>
+</ol>
+</blockquote>
+<p>引文1中给出了LRU cache 的一种实现方式是： 双向链表 + hashtable。由于cache中的移动操作频繁，因此使用双向链表。为了弥补双向链表查找性能缺陷，引入hashtable。读者可以理解了引文1中的简单实现再继续往下看。</p>
+<h1>LRUHandle</h1>
+<p>用来表示哈希表中的元素</p>
+<div class="highlight"><pre><span></span><span class="c1">// An entry is a variable length heap-allocated structure.  Entries</span>
+<span class="c1">// are kept in a circular doubly linked list ordered by access time.</span>
+<span class="k">struct</span> <span class="n">LRUHandle</span> <span class="p">{</span>
+  <span class="kt">void</span><span class="o">*</span> <span class="n">value</span><span class="p">;</span>
+  <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">deleter</span><span class="p">)(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">value</span><span class="p">);</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">next_hash</span><span class="p">;</span> <span class="c1">// 作为Hash表中的节点，指向hash值相同的节点（解决hash冲突采用链地址法）</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">next</span><span class="p">;</span> <span class="c1">// 作为Cache中的节点，指向后继</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">prev</span><span class="p">;</span> <span class="c1">// 作为Cache中的节点，指向前驱</span>
+  <span class="kt">size_t</span> <span class="n">charge</span><span class="p">;</span>      <span class="c1">// TODO(opt): Only allow uint32_t?</span>
+  <span class="kt">size_t</span> <span class="n">key_length</span><span class="p">;</span> <span class="c1">// key的长度</span>
+  <span class="kt">uint32_t</span> <span class="n">refs</span><span class="p">;</span> <span class="c1">// 引用计数</span>
+  <span class="kt">uint32_t</span> <span class="n">hash</span><span class="p">;</span>      <span class="c1">// 哈希值，Hash of key(); used for fast sharding and comparisons</span>
+  <span class="kt">char</span> <span class="n">key_data</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>   <span class="c1">// Beginning of key</span>
+
+  <span class="n">Slice</span> <span class="nf">key</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+    <span class="c1">// For cheaper lookups, we allow a temporary Handle object</span>
+    <span class="c1">// to store a pointer to a key in &quot;value&quot;.</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">next</span> <span class="o">==</span> <span class="n">this</span><span class="p">)</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="o">*</span><span class="p">(</span><span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Slice</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">value</span><span class="p">));</span>
+    <span class="p">}</span> <span class="k">else</span> <span class="p">{</span>
+      <span class="k">return</span> <span class="n">Slice</span><span class="p">(</span><span class="n">key_data</span><span class="p">,</span> <span class="n">key_length</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>其中比较有意思的是<code>char key_data[1];</code>，会有这样的疑问：为什么不直接定义成指针呢？
+定义成指针将会占用4字节（32位机器）或8字节（64位机器）的空间，而这样定义只占用1字节空间。而且key_data位于结构体的最后面，可在申请内存时，申请足够多的空间。
+往下面看会看到这句：</p>
+<div class="highlight"><pre><span></span>  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span> <span class="o">=</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">LRUHandle</span><span class="o">*&gt;</span><span class="p">(</span>
+      <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">LRUHandle</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">key</span><span class="p">.</span><span class="n">size</span><span class="p">()));</span>
+</pre></div>
+
+
+<p>注意在使用malloc申请空间时，<code>sizeof(LRUHandle)-1</code>。其中减去的1就是key_data[1]，然后根据key.size()动态申请空间。最后，key_data还是指向这块空间的。看来key_data[1]只是一个占位符。（个人理解）</p>
+<h1>哈希表 HandleTable</h1>
+<p>bucket：桶，哈希表当中有若干bucket，而每个bucket是一个链表，用来存放hash值相同的元素。（所以这里使用的解决“hash冲突”的方法是链表法）</p>
+<p>HandleTable中：</p>
+<ul>
+<li>length_ : hash表桶（bucket）的数量</li>
+<li>elems_ : 放入哈希表中元素的个数
+当元素个数大于桶的个数时（elems_ &gt; length_ ），就重新hash（rehash），这样hash表平均查找效率为O(1)。（可以与Redis中哈希表的rehash对比一下。）</li>
+<li>list_ : 是一个数组，数组中的每个元素是一个指针，构成链表存储hash值相同的元素。在这里，每个元素的类型是 LRUHandle *</li>
+</ul>
+<h2>构造函数</h2>
+<p>构造函数的初始化列表将桶个数和元素个数设置为0，然后在函数体中进行Resize()，Resize函数对哈希表大小进行调整，然后对所有元素进行rehash。经过resize，哈希表的初始大小为4。</p>
+<div class="highlight"><pre><span></span><span class="n">HandleTable</span><span class="p">()</span> <span class="o">:</span> <span class="n">length_</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">elems_</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">list_</span><span class="p">(</span><span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span> <span class="n">Resize</span><span class="p">();</span> <span class="c1">// 初始大小length_为4}</span>
+</pre></div>
+
+
+<h2>查找</h2>
+<p>查找一个元素是否在哈希表中。首先根据该元素的hash值定位到某个hash bucket（是一个链表），然后在链表中顺序查找。最后，如果找到了就返回一个指向该元素的指针。否则返回该桶的最后一个位置的指针。</p>
+<p>注意该函数的返回值是一个二级指针，调用这可以使用该指针对其进行修改。</p>
+<p>此外，hash值是如何与数组下标联系起来的呢？ 通过 hash &amp; (length -1) ，length为数组大小，并且length是4的倍数（见Resize函数）那么length-1相当于一个mask，与hash做与操作就计算出了该元素在哪个桶了。</p>
+<div class="highlight"><pre><span></span>  <span class="c1">// Return a pointer to slot that points to a cache entry that</span>
+  <span class="c1">// matches key/hash.  If there is no such cache entry, return a</span>
+  <span class="c1">// pointer to the trailing slot in the corresponding linked list.</span>
+  <span class="n">LRUHandle</span><span class="o">**</span> <span class="nf">FindPointer</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">hash</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 通过hash定位到某个桶</span>
+    <span class="n">LRUHandle</span><span class="o">**</span> <span class="n">ptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">list_</span><span class="p">[</span><span class="n">hash</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">length_</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)];</span>
+    <span class="c1">// 在链表中顺序查找（比对key）</span>
+    <span class="k">while</span> <span class="p">(</span><span class="o">*</span><span class="n">ptr</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span>
+           <span class="p">((</span><span class="o">*</span><span class="n">ptr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">hash</span> <span class="o">!=</span> <span class="n">hash</span> <span class="o">||</span> <span class="n">key</span> <span class="o">!=</span> <span class="p">(</span><span class="o">*</span><span class="n">ptr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">()))</span> <span class="p">{</span>
+      <span class="n">ptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="p">(</span><span class="o">*</span><span class="n">ptr</span><span class="p">)</span><span class="o">-&gt;</span><span class="n">next_hash</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// 返回查找结果</span>
+    <span class="k">return</span> <span class="n">ptr</span><span class="p">;</span>
+  <span class="p">}</span>
+</pre></div>
+
+
+<h2>插入操作</h2>
+<p>这是将一个元素插入到哈希表的接口。</p>
+<div class="highlight"><pre><span></span>  <span class="n">LRUHandle</span><span class="o">*</span> <span class="nf">Insert</span><span class="p">(</span><span class="n">LRUHandle</span><span class="o">*</span> <span class="n">h</span><span class="p">)</span> <span class="p">{</span>
+    <span class="c1">// 在链表中查找是否有该元素</span>
+    <span class="n">LRUHandle</span><span class="o">**</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">FindPointer</span><span class="p">(</span><span class="n">h</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">(),</span> <span class="n">h</span><span class="o">-&gt;</span><span class="n">hash</span><span class="p">);</span>
+    <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">old</span> <span class="o">=</span> <span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+    <span class="c1">// old==NULL表示没有找到，执行插入操作</span>
+    <span class="c1">// 否则表示找到了相同元素，那么也要用新的代替旧的</span>
+    <span class="n">h</span><span class="o">-&gt;</span><span class="n">next_hash</span> <span class="o">=</span> <span class="p">(</span><span class="n">old</span> <span class="o">==</span> <span class="nb">NULL</span> <span class="o">?</span> <span class="nb">NULL</span> <span class="o">:</span> <span class="n">old</span><span class="o">-&gt;</span><span class="n">next_hash</span><span class="p">);</span>
+    <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">h</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">old</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+      <span class="o">++</span><span class="n">elems_</span><span class="p">;</span> <span class="c1">// 元素个数加1</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">elems_</span> <span class="o">&gt;</span> <span class="n">length_</span><span class="p">)</span> <span class="p">{</span>
+        <span class="c1">// 必要时，调整哈希表大小</span>
+        <span class="n">Resize</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="c1">// 返回旧节点，旧节点在外面被释放</span>
+    <span class="k">return</span> <span class="n">old</span><span class="p">;</span>
+  <span class="p">}</span>
+</pre></div>
+
+
+<h2>删除</h2>
+<div class="highlight"><pre><span></span>  <span class="n">LRUHandle</span><span class="o">*</span> <span class="nf">Remove</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">hash</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">LRUHandle</span><span class="o">**</span> <span class="n">ptr</span> <span class="o">=</span> <span class="n">FindPointer</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">hash</span><span class="p">);</span>
+    <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">result</span> <span class="o">=</span> <span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">result</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+      <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">result</span><span class="o">-&gt;</span><span class="n">next_hash</span><span class="p">;</span>
+      <span class="o">--</span><span class="n">elems_</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">result</span><span class="p">;</span>
+  <span class="p">}</span>
+</pre></div>
+
+
+<h2>Resize (Rehash)</h2>
+<p>该函数保证桶的个数大于元素的个数。</p>
+<div class="highlight"><pre><span></span>  <span class="kt">void</span> <span class="nf">Resize</span><span class="p">()</span> <span class="p">{</span>
+    <span class="kt">uint32_t</span> <span class="n">new_length</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">new_length</span> <span class="o">&lt;</span> <span class="n">elems_</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">new_length</span> <span class="o">*=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="c1">// 分派新的桶数组，初始化每个桶为空</span>
+    <span class="n">LRUHandle</span><span class="o">**</span> <span class="n">new_list</span> <span class="o">=</span> <span class="n">new</span> <span class="n">LRUHandle</span><span class="o">*</span><span class="p">[</span><span class="n">new_length</span><span class="p">];</span>
+    <span class="n">memset</span><span class="p">(</span><span class="n">new_list</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">new_list</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="n">new_length</span><span class="p">);</span>
+    <span class="kt">uint32_t</span> <span class="n">count</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+    <span class="c1">// 对每个元素，重新计算在新的表中的位置</span>
+    <span class="k">for</span> <span class="p">(</span><span class="kt">uint32_t</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">length_</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">h</span> <span class="o">=</span> <span class="n">list_</span><span class="p">[</span><span class="n">i</span><span class="p">];</span>
+      <span class="k">while</span> <span class="p">(</span><span class="n">h</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">next</span> <span class="o">=</span> <span class="n">h</span><span class="o">-&gt;</span><span class="n">next_hash</span><span class="p">;</span>
+        <span class="kt">uint32_t</span> <span class="n">hash</span> <span class="o">=</span> <span class="n">h</span><span class="o">-&gt;</span><span class="n">hash</span><span class="p">;</span>
+        <span class="n">LRUHandle</span><span class="o">**</span> <span class="n">ptr</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">new_list</span><span class="p">[</span><span class="n">hash</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">new_length</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)];</span>
+        <span class="n">h</span><span class="o">-&gt;</span><span class="n">next_hash</span> <span class="o">=</span> <span class="o">*</span><span class="n">ptr</span><span class="p">;</span>
+        <span class="o">*</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">h</span><span class="p">;</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+        <span class="n">count</span><span class="o">++</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="n">assert</span><span class="p">(</span><span class="n">elems_</span> <span class="o">==</span> <span class="n">count</span><span class="p">);</span> <span class="c1">// 确保所有元素都被重新放入了新表中</span>
+    <span class="n">delete</span><span class="p">[]</span> <span class="n">list_</span><span class="p">;</span> <span class="c1">// 删除旧的桶数组</span>
+    <span class="n">list_</span> <span class="o">=</span> <span class="n">new_list</span><span class="p">;</span> <span class="c1">// 让list_指向新的桶数组</span>
+    <span class="n">length_</span> <span class="o">=</span> <span class="n">new_length</span><span class="p">;</span> <span class="c1">// 更新length_</span>
+  <span class="p">}</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<h1>LRUCache</h1>
+<p>一个LRUCache的实现，成员变量介绍：</p>
+<div class="highlight"><pre><span></span>  <span class="c1">// Initialized before use.</span>
+  <span class="kt">size_t</span> <span class="n">capacity_</span><span class="p">;</span> <span class="c1">// cache的容量</span>
+
+  <span class="c1">// mutex_ protects the following state.</span>
+  <span class="n">mutable</span> <span class="n">port</span><span class="o">::</span><span class="n">Mutex</span> <span class="n">mutex_</span><span class="p">;</span>
+  <span class="kt">size_t</span> <span class="n">usage_</span><span class="p">;</span> <span class="c1">// cache已经使用的容量</span>
+
+  <span class="c1">// Dummy head of LRU list.</span>
+  <span class="c1">// lru.prev is newest entry, lru.next is oldest entry.</span>
+  <span class="n">LRUHandle</span> <span class="n">lru_</span><span class="p">;</span> <span class="c1">// LRU链表（双向循环链表），按照访问先后进行排序，表头的prev是最近访问的</span>
+
+  <span class="n">HandleTable</span> <span class="n">table_</span><span class="p">;</span> <span class="c1">// 存放节点的哈希表，用于快读查找</span>
+</pre></div>
+
+
+<p>可以看到，LRUCache就是是通过 双向链表 + hashtable 实现的（理由在最上面）。</p>
+<h2>查找</h2>
+<p>查找操作就是调用前面介绍的哈希表的查找函数。</p>
+<div class="highlight"><pre><span></span><span class="n">Cache</span><span class="o">::</span><span class="n">Handle</span><span class="o">*</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">Lookup</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">hash</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MutexLock</span> <span class="n">l</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">);</span>
+  <span class="c1">// 在哈希表中查找</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span> <span class="o">=</span> <span class="n">table_</span><span class="p">.</span><span class="n">Lookup</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">hash</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">e</span><span class="o">-&gt;</span><span class="n">refs</span><span class="o">++</span><span class="p">;</span> <span class="c1">// 增加引用计数</span>
+    <span class="c1">// 从cache中移动到最前面（现remove再append）</span>
+    <span class="n">LRU_Remove</span><span class="p">(</span><span class="n">e</span><span class="p">);</span> 
+    <span class="n">LRU_Append</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Cache</span><span class="o">::</span><span class="n">Handle</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="c1">// remove和append只是关于双向链表的操作，比较简单</span>
+<span class="kt">void</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">LRU_Remove</span><span class="p">(</span><span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">prev</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">LRU_Append</span><span class="p">(</span><span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+  <span class="c1">// Make &quot;e&quot; newest entry by inserting just before lru_</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">lru_</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">lru_</span><span class="p">.</span><span class="n">prev</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">prev</span><span class="o">-&gt;</span><span class="n">next</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">next</span><span class="o">-&gt;</span><span class="n">prev</span> <span class="o">=</span> <span class="n">e</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="c1">// 引用计数减一。引用计数变为0时，调用删除器deleter。</span>
+<span class="kt">void</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">Unref</span><span class="p">(</span><span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">refs</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">refs</span><span class="o">--</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">refs</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">usage_</span> <span class="o">-=</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">charge</span><span class="p">;</span>
+    <span class="p">(</span><span class="o">*</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">deleter</span><span class="p">)(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">(),</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">value</span><span class="p">);</span>
+    <span class="n">free</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span> 
+</pre></div>
+
+
+<h2>插入</h2>
+<div class="highlight"><pre><span></span><span class="n">Cache</span><span class="o">::</span><span class="n">Handle</span><span class="o">*</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">Insert</span><span class="p">(</span>
+    <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">hash</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">charge</span><span class="p">,</span>
+    <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">deleter</span><span class="p">)(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">void</span><span class="o">*</span> <span class="n">value</span><span class="p">))</span> <span class="p">{</span>
+  <span class="n">MutexLock</span> <span class="n">l</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">);</span>
+
+  <span class="c1">// 由key、hash、value等创建一个新的元素，将被插入到cache中</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span> <span class="o">=</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">LRUHandle</span><span class="o">*&gt;</span><span class="p">(</span>
+      <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">LRUHandle</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span> <span class="o">+</span> <span class="n">key</span><span class="p">.</span><span class="n">size</span><span class="p">()));</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">value</span> <span class="o">=</span> <span class="n">value</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">deleter</span> <span class="o">=</span> <span class="n">deleter</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">charge</span> <span class="o">=</span> <span class="n">charge</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">key_length</span> <span class="o">=</span> <span class="n">key</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">hash</span> <span class="o">=</span> <span class="n">hash</span><span class="p">;</span>
+  <span class="n">e</span><span class="o">-&gt;</span><span class="n">refs</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>  <span class="c1">// One from LRUCache, one for the returned handle</span>
+  <span class="n">memcpy</span><span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">key_data</span><span class="p">,</span> <span class="n">key</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">key</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+  <span class="n">LRU_Append</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+  <span class="n">usage_</span> <span class="o">+=</span> <span class="n">charge</span><span class="p">;</span>
+
+  <span class="c1">// 哈希表的Insert函数在插入时如果发现有相同元素，则将旧的返回，将新的替换旧的</span>
+  <span class="c1">// 然后将旧的进行释放</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">old</span> <span class="o">=</span> <span class="n">table_</span><span class="p">.</span><span class="n">Insert</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">old</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">LRU_Remove</span><span class="p">(</span><span class="n">old</span><span class="p">);</span>
+    <span class="n">Unref</span><span class="p">(</span><span class="n">old</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 当cache满了，需要移除oldest的元素</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">usage_</span> <span class="o">&gt;</span> <span class="n">capacity_</span> <span class="o">&amp;&amp;</span> <span class="n">lru_</span><span class="p">.</span><span class="n">next</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">lru_</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">old</span> <span class="o">=</span> <span class="n">lru_</span><span class="p">.</span><span class="n">next</span><span class="p">;</span>
+    <span class="n">LRU_Remove</span><span class="p">(</span><span class="n">old</span><span class="p">);</span>
+    <span class="n">table_</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">old</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">(),</span> <span class="n">old</span><span class="o">-&gt;</span><span class="n">hash</span><span class="p">);</span>
+    <span class="n">Unref</span><span class="p">(</span><span class="n">old</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="k">return</span> <span class="n">reinterpret_cast</span><span class="o">&lt;</span><span class="n">Cache</span><span class="o">::</span><span class="n">Handle</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>设置cache的容量</p>
+<div class="highlight"><pre><span></span>  <span class="c1">// Separate from constructor so caller can easily make an array of LRUCache</span>
+  <span class="kt">void</span> <span class="nf">SetCapacity</span><span class="p">(</span><span class="kt">size_t</span> <span class="n">capacity</span><span class="p">)</span> <span class="p">{</span> <span class="n">capacity_</span> <span class="o">=</span> <span class="n">capacity</span><span class="p">;</span> <span class="p">}</span>
+</pre></div>
+
+
+<p>此外，Erase将清空cache，而Prune会移除引用计数为1的元素（即外部没有使用）</p>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">Erase</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">uint32_t</span> <span class="n">hash</span><span class="p">)</span> <span class="p">{</span>
+  <span class="n">MutexLock</span> <span class="n">l</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">);</span>
+  <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span> <span class="o">=</span> <span class="n">table_</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">hash</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">e</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
+    <span class="n">LRU_Remove</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+    <span class="n">Unref</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">LRUCache</span><span class="o">::</span><span class="n">Prune</span><span class="p">()</span> <span class="p">{</span>
+  <span class="n">MutexLock</span> <span class="n">l</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">);</span>
+  <span class="k">for</span> <span class="p">(</span><span class="n">LRUHandle</span><span class="o">*</span> <span class="n">e</span> <span class="o">=</span> <span class="n">lru_</span><span class="p">.</span><span class="n">next</span><span class="p">;</span> <span class="n">e</span> <span class="o">!=</span> <span class="o">&amp;</span><span class="n">lru_</span><span class="p">;</span> <span class="p">)</span> <span class="p">{</span>
+    <span class="n">LRUHandle</span><span class="o">*</span> <span class="n">next</span> <span class="o">=</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">next</span><span class="p">;</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">refs</span> <span class="o">==</span> <span class="mi">1</span><span class="p">)</span> <span class="p">{</span>
+      <span class="n">table_</span><span class="p">.</span><span class="n">Remove</span><span class="p">(</span><span class="n">e</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">(),</span> <span class="n">e</span><span class="o">-&gt;</span><span class="n">hash</span><span class="p">);</span>
+      <span class="n">LRU_Remove</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+      <span class="n">Unref</span><span class="p">(</span><span class="n">e</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">e</span> <span class="o">=</span> <span class="n">next</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>SharedLRUCache</h1>
+<blockquote>
+<p>不错的分析：http://mingxinglai.com/cn/2013/01/leveldb-cache/</p>
+</blockquote>
+<p>SharedLRUCache中有一个LRUCache的数组，SharedLRUCache做的工作就是计算出元素的hash值，然后根据hash值的高4位确定使用哪一个LRUCache，这么做的理由(摘自上面的引文)：</p>
+<blockquote>
+<p>这是因为levelDB是多线程的，每个线程访问缓冲区的时候都会将缓冲区锁住，为了多线程访问，尽可能快速，减少锁开销，ShardedLRUCache内部有16个LRUCache，查找Key时首先计算key属于哪一个分片，分片的计算方法是取32位hash值的高4位，然后在相应的LRUCache中进行查找，这样就大大减少了多线程的访问锁的开销。</p>
+</blockquote>
+<p>最后，引用引文4中的图作为总结。
+<img alt="这里写图片描述" src="http://i.imgur.com/Gtnn06N.jpg" /></p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "leveldb-lru-cache.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>

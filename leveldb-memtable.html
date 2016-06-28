@@ -79,7 +79,7 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 <p>MemTable可以看做是对SkipList的封装。</p>
 <h1>成员变量</h1>
 <p>首先看看MemTable的成员变量：</p>
-<div class="highlight"><pre>  <span class="k">typedef</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span> <span class="n">KeyComparator</span><span class="o">&gt;</span> <span class="n">Table</span><span class="p">;</span>
+<div class="highlight"><pre><span></span>  <span class="k">typedef</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span><span class="p">,</span> <span class="n">KeyComparator</span><span class="o">&gt;</span> <span class="n">Table</span><span class="p">;</span>
   <span class="n">KeyComparator</span> <span class="n">comparator_</span><span class="p">;</span>
   <span class="kt">int</span> <span class="n">refs_</span><span class="p">;</span>    <span class="c1">// 引用计数</span>
   <span class="n">Arena</span> <span class="n">arena_</span><span class="p">;</span> <span class="c1">// 内存池</span>
@@ -89,10 +89,10 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 
 <h1>添加/查询接口</h1>
 <p>暴露出来的添加、查询接口：</p>
-<div class="highlight"><pre>  <span class="c1">// Add an entry into memtable that maps key to value at the</span>
+<div class="highlight"><pre><span></span>  <span class="c1">// Add an entry into memtable that maps key to value at the</span>
   <span class="c1">// specified sequence number and with the specified type.</span>
   <span class="c1">// Typically value will be empty if type==kTypeDeletion.</span>
-  <span class="kt">void</span> <span class="n">Add</span><span class="p">(</span><span class="n">SequenceNumber</span> <span class="n">seq</span><span class="p">,</span> <span class="n">ValueType</span> <span class="n">type</span><span class="p">,</span>
+  <span class="kt">void</span> <span class="nf">Add</span><span class="p">(</span><span class="n">SequenceNumber</span> <span class="n">seq</span><span class="p">,</span> <span class="n">ValueType</span> <span class="n">type</span><span class="p">,</span>
            <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
            <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">);</span>
 
@@ -100,12 +100,12 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
   <span class="c1">// If memtable contains a deletion for key, store a NotFound() error</span>
   <span class="c1">// in *status and return true.</span>
   <span class="c1">// Else, return false.</span>
-  <span class="n">bool</span> <span class="n">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">LookupKey</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="n">Status</span><span class="o">*</span> <span class="n">s</span><span class="p">);</span>
+  <span class="kt">bool</span> <span class="nf">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">LookupKey</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="n">Status</span><span class="o">*</span> <span class="n">s</span><span class="p">);</span>
 </pre></div>
 
 
 <h2>添加</h2>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">MemTable</span><span class="o">::</span><span class="n">Add</span><span class="p">(</span><span class="n">SequenceNumber</span> <span class="n">s</span><span class="p">,</span> <span class="n">ValueType</span> <span class="n">type</span><span class="p">,</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">MemTable</span><span class="o">::</span><span class="n">Add</span><span class="p">(</span><span class="n">SequenceNumber</span> <span class="n">s</span><span class="p">,</span> <span class="n">ValueType</span> <span class="n">type</span><span class="p">,</span>
                    <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span>
                    <span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">value</span><span class="p">)</span> <span class="p">{</span>
   <span class="c1">// Format of an entry is concatenation of:</span>
@@ -137,7 +137,7 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 编码格式为：<code>| internal_key_size | internal_key |  val_size | value |</code>
 其中internal_key 是由 key，s，type组成的，而s 和 type被编码成8个字节, 所以：internal_key_size = key.size() + 8。编码完成后，将buf插入到table中。</p>
 <h2>查询</h2>
-<div class="highlight"><pre><span class="n">bool</span> <span class="n">MemTable</span><span class="o">::</span><span class="n">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">LookupKey</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="n">Status</span><span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><span class="kt">bool</span> <span class="n">MemTable</span><span class="o">::</span><span class="n">Get</span><span class="p">(</span><span class="k">const</span> <span class="n">LookupKey</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">std</span><span class="o">::</span><span class="n">string</span><span class="o">*</span> <span class="n">value</span><span class="p">,</span> <span class="n">Status</span><span class="o">*</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
   <span class="n">Slice</span> <span class="n">memkey</span> <span class="o">=</span> <span class="n">key</span><span class="p">.</span><span class="n">memtable_key</span><span class="p">();</span>
   <span class="n">Table</span><span class="o">::</span><span class="n">Iterator</span> <span class="n">iter</span><span class="p">(</span><span class="o">&amp;</span><span class="n">table_</span><span class="p">);</span>
   <span class="n">iter</span><span class="p">.</span><span class="n">Seek</span><span class="p">(</span><span class="n">memkey</span><span class="p">.</span><span class="n">data</span><span class="p">());</span>
@@ -160,12 +160,12 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
       <span class="c1">// Correct user key</span>
       <span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">DecodeFixed64</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">);</span>
       <span class="k">switch</span> <span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">tag</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">))</span> <span class="p">{</span>
-        <span class="k">case</span> <span class="n">kTypeValue</span>: <span class="p">{</span>
+        <span class="k">case</span> <span class="nl">kTypeValue</span><span class="p">:</span> <span class="p">{</span>
           <span class="n">Slice</span> <span class="n">v</span> <span class="o">=</span> <span class="n">GetLengthPrefixedSlice</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span><span class="p">);</span>
           <span class="n">value</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
           <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
         <span class="p">}</span>
-        <span class="k">case</span> <span class="n">kTypeDeletion</span>:
+        <span class="k">case</span> <span class="nl">kTypeDeletion</span><span class="p">:</span>
           <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="n">Status</span><span class="o">::</span><span class="n">NotFound</span><span class="p">(</span><span class="n">Slice</span><span class="p">());</span>
           <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
       <span class="p">}</span>
@@ -177,7 +177,7 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 
 
 <p>该函数根据key在table中查找，找到时返回一个迭代器iter，那么entry就指向key（即上面Add函数中的buf）</p>
-<div class="highlight"><pre>    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">iter</span><span class="p">.</span><span class="n">key</span><span class="p">();</span>
+<div class="highlight"><pre><span></span>    <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">entry</span> <span class="o">=</span> <span class="n">iter</span><span class="p">.</span><span class="n">key</span><span class="p">();</span>
 </pre></div>
 
 
@@ -188,12 +188,12 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 <p>其中SequenceNumber和Type被打包成一个8字节组。</p>
 <p>那么找到key的过程是这样的：
 首先要取出internal_key_size。还记得varint是个边长编码吗？但是varint最长不会超过5字节，所以函数<code>GetVarint32Ptr</code>可以从entry的前5个字节解码出internal_key_size。注意，该函数能够处理internal_key_size不足5个字节的情况，原因是：由于varint的编码方式是使用每个字节的第8位表示是否有后续字节，所以该函数可以处理变长的varint。^_^。同时，该函数将返回<code>internal_key</code>的首地址。</p>
-<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key_ptr</span> <span class="o">=</span> <span class="n">GetVarint32Ptr</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">entry</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key_length</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">key_ptr</span> <span class="o">=</span> <span class="n">GetVarint32Ptr</span><span class="p">(</span><span class="n">entry</span><span class="p">,</span> <span class="n">entry</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">key_length</span><span class="p">);</span>
 </pre></div>
 
 
 <p>然后比较要查找的key和找到的key是否相同，其中减去的8字节是上面提到的<code>SequenceNumber+Type</code>，它们不参与比较过程：</p>
-<div class="highlight"><pre>    <span class="k">if</span> <span class="p">(</span><span class="n">comparator_</span><span class="p">.</span><span class="n">comparator</span><span class="p">.</span><span class="n">user_comparator</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Compare</span><span class="p">(</span>
+<div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="p">(</span><span class="n">comparator_</span><span class="p">.</span><span class="n">comparator</span><span class="p">.</span><span class="n">user_comparator</span><span class="p">()</span><span class="o">-&gt;</span><span class="n">Compare</span><span class="p">(</span>
             <span class="n">Slice</span><span class="p">(</span><span class="n">key_ptr</span><span class="p">,</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">),</span> 
             <span class="n">key</span><span class="p">.</span><span class="n">user_key</span><span class="p">())</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span> 
     <span class="p">{...}</span>
@@ -201,15 +201,15 @@ LevelDb的MemTable提供了将KV数据写入，删除以及读取KV记录的操�
 
 
 <p>最后，如果Type是<code>kTypeValue</code>，那么就返回value部分；如果Type是<code>kTypeDeletion</code>，表示该数据被标记为删除类型，返回NotFound。</p>
-<div class="highlight"><pre><span class="c1">//获得 SequenceNumber + Type , Type是最后一个字节，即下面的 tag &amp; 0xff。</span>
+<div class="highlight"><pre><span></span><span class="c1">//获得 SequenceNumber + Type , Type是最后一个字节，即下面的 tag &amp; 0xff。</span>
 <span class="k">const</span> <span class="kt">uint64_t</span> <span class="n">tag</span> <span class="o">=</span> <span class="n">DecodeFixed64</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span> <span class="o">-</span> <span class="mi">8</span><span class="p">);</span>
 <span class="k">switch</span> <span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="n">ValueType</span><span class="o">&gt;</span><span class="p">(</span><span class="n">tag</span> <span class="o">&amp;</span> <span class="mh">0xff</span><span class="p">))</span> <span class="p">{</span>
-  <span class="k">case</span> <span class="n">kTypeValue</span>: <span class="p">{</span>
+  <span class="k">case</span> <span class="nl">kTypeValue</span><span class="p">:</span> <span class="p">{</span>
     <span class="n">Slice</span> <span class="n">v</span> <span class="o">=</span> <span class="n">GetLengthPrefixedSlice</span><span class="p">(</span><span class="n">key_ptr</span> <span class="o">+</span> <span class="n">key_length</span><span class="p">);</span>
     <span class="n">value</span><span class="o">-&gt;</span><span class="n">assign</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
     <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
   <span class="p">}</span>
-  <span class="k">case</span> <span class="n">kTypeDeletion</span>:
+  <span class="k">case</span> <span class="nl">kTypeDeletion</span><span class="p">:</span>
     <span class="o">*</span><span class="n">s</span> <span class="o">=</span> <span class="n">Status</span><span class="o">::</span><span class="n">NotFound</span><span class="p">(</span><span class="n">Slice</span><span class="p">());</span>
     <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
 <span class="p">}</span>
@@ -229,7 +229,7 @@ LookupKey是helper类，将用户查询使用的userkey转化为internal_key的�
 </li>
 </ol>
 <p>成员变量：构成是这样的 <code>| klength | userkey | tag |</code></p>
-<div class="highlight"><pre>  <span class="c1">// We construct a char array of the form:</span>
+<div class="highlight"><pre><span></span>  <span class="c1">// We construct a char array of the form:</span>
   <span class="c1">//    klength  varint32               &lt;-- start_</span>
   <span class="c1">//    userkey  char[klength]          &lt;-- kstart_</span>
   <span class="c1">//    tag      uint64</span>
@@ -246,7 +246,7 @@ LookupKey是helper类，将用户查询使用的userkey转化为internal_key的�
 <p>userkey是用户要查找的key，那么LookupKey将userkey转换为内部表示方式：
 <code>| key_length | key | tag |</code>,其中tag就是SequenceNumber+Type。当key比较短时，使用space_空间，否则在堆上申请，在析构时释放。</p>
 <p>构造函数是这样的：</p>
-<div class="highlight"><pre><span class="n">LookupKey</span><span class="o">::</span><span class="n">LookupKey</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">user_key</span><span class="p">,</span> <span class="n">SequenceNumber</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><span class="n">LookupKey</span><span class="o">::</span><span class="n">LookupKey</span><span class="p">(</span><span class="k">const</span> <span class="n">Slice</span><span class="o">&amp;</span> <span class="n">user_key</span><span class="p">,</span> <span class="n">SequenceNumber</span> <span class="n">s</span><span class="p">)</span> <span class="p">{</span>
   <span class="kt">size_t</span> <span class="n">usize</span> <span class="o">=</span> <span class="n">user_key</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
   <span class="kt">size_t</span> <span class="n">needed</span> <span class="o">=</span> <span class="n">usize</span> <span class="o">+</span> <span class="mi">13</span><span class="p">;</span>  <span class="c1">// A conservative estimate</span>
   <span class="kt">char</span><span class="o">*</span> <span class="n">dst</span><span class="p">;</span>
