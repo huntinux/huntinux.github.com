@@ -54,8 +54,13 @@
            
             </header>
             <footer class="post-info">
+<<<<<<< HEAD
               <abbr class="published" title="2016-06-29T09:00:00+08:00">
                 Wed 29 June 2016
+=======
+              <abbr class="published" title="2016-06-28T19:00:00+08:00">
+                Tue 28 June 2016
+>>>>>>> 996d2db8a667a1a71f97e1dbc11c3c2c21be7e7d
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -244,6 +249,7 @@
 <p>This buffered IO pattern is common enough that Libevent provides a generic mechanism for it. A "bufferevent" consists of an underlying transport (like a socket), a read buffer, and a write buffer. Instead of regular events, which give callbacks when the underlying transport is ready to be read or written, a bufferevent invokes its user-supplied callbacks when it has read or written enough data.</p>
 </blockquote>
 <p>通常的做法是在关注的socket可读或可写时调用callback；而bufferevent则在读取了足够的数据或写入了足够的数据时才去调用用户定义的回调函数。因此，前者是通知“就绪”，后者是通知“完成”。</p>
+<<<<<<< HEAD
 <p>bufferevent的类型：
 1. socket-based bufferevents : 
 A bufferevent that sends and receives data from an underlying stream socket, using the event_* interface as its backend.
@@ -255,6 +261,29 @@ A bufferevent that processes incoming and outgoing data before passing it to an 
 ple, to compress or translate data.
 4. paired bufferevents :
 Two bufferevents that transmit data to one another.</p>
+=======
+<p>bufferevent的类型：</p>
+<ol>
+<li>
+<p>socket-based bufferevents : 
+A bufferevent that sends and receives data from an underlying stream socket, using the event_* interface as its backend.</p>
+</li>
+<li>
+<p>asynchronous-IO bufferevents :
+A bufferevent that uses the Windows IOCP interface to send and receive data to an underlying stream socket. (Windows
+only; experimental.)</p>
+</li>
+<li>
+<p>filtering bufferevents : 
+A bufferevent that processes incoming and outgoing data before passing it to an underlying bufferevent object—for exam-
+ple, to compress or translate data.</p>
+</li>
+<li>
+<p>paired bufferevents :
+Two bufferevents that transmit data to one another.</p>
+</li>
+</ol>
+>>>>>>> 996d2db8a667a1a71f97e1dbc11c3c2c21be7e7d
 <h2>Bufferevents and evbuffers</h2>
 <p>每个Bufferevents都有两个数据区： input buffer 和 output buffer。类型都是<code>struct evbuffer</code>。
 当你有数据要写到bufferevent上时，就将数据添加到output buffer。
@@ -263,12 +292,23 @@ Two bufferevents that transmit data to one another.</p>
 <blockquote>
 <p>Every bufferevent has two data-related callbacks: a read callback and a write callback. By default, the read callback is called whenever any data is read from the underlying transport, and the write callback is called whenever enough data from the output buffer is emptied to the underlying transport. You can override the behavior of these functions by adjusting the read and write "watermarks" of the bufferevent.</p>
 </blockquote>
+<<<<<<< HEAD
 <p>bufferevent有两个数据相关的回调函数：<code>read callback and  write callback</code>。默认情况下，<code>read callback</code>会当 从关注的socket读到了任意的数据时被调用；<code>write callback</code> 在全部的数据从output buffer传送给了对端时被调用。可以通过修改bufferevent的读写watermarks（读写水位）来修改<code>read callback and  write callback</code>的行为。</p>
 <p>4个watermarks： 
 - Read low-water mark ： 
 Whenever a read occurs that leaves the bufferevent’s input buffer at this level or higher, the bufferevent’s read callback is invoked. Defaults to 0, so that every read results in the read callback being invoked.</p>
 <ul>
 <li>
+=======
+<p>bufferevent有两个数据相关的回调函数：<code>read callback and  write callback</code>。默认情况下，<code>read callback</code>会当 从关注的socket读到了任意的数据时被调用；<code>write callback</code> 在全部的数据从output buffer传送给了对端时被调用(output buffer变为空)。可以通过修改bufferevent的读写watermarks（读写水位）来修改<code>read callback and  write callback</code>的行为。</p>
+<p>4个watermarks： </p>
+<ul>
+<li>
+<p>Read low-water mark ： 
+Whenever a read occurs that leaves the bufferevent’s input buffer at this level or higher, the bufferevent’s read callback is invoked. Defaults to 0, so that every read results in the read callback being invoked.</p>
+</li>
+<li>
+>>>>>>> 996d2db8a667a1a71f97e1dbc11c3c2c21be7e7d
 <p>Read high-water mark ： 
 If the bufferevent’s input buffer ever gets to this level, the bufferevent stops reading until enough data is drained from the input buffer to take us below it again. Defaults to unlimited, so that we never stop reading because of the size of the input buffer.</p>
 </li>
@@ -340,7 +380,10 @@ transport of another bufferevent. See notes on filtering bufferevents below.</p>
     <span class="n">bufferevent_setcb</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">echo_read_cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">echo_event_cb</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
     <span class="n">bufferevent_enable</span><span class="p">(</span><span class="n">bev</span><span class="p">,</span> <span class="n">EV_READ</span><span class="o">|</span><span class="n">EV_WRITE</span><span class="p">);</span>
 <span class="p">}</span>
+<<<<<<< HEAD
 
+=======
+>>>>>>> 996d2db8a667a1a71f97e1dbc11c3c2c21be7e7d
 <span class="k">static</span> <span class="kt">void</span>
 <span class="nf">accept_error_cb</span><span class="p">(</span><span class="k">struct</span> <span class="n">evconnlistener</span> <span class="o">*</span><span class="n">listener</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
 <span class="p">{</span>
@@ -418,6 +461,10 @@ transport of another bufferevent. See notes on filtering bufferevents below.</p>
 <h4>Categories</h4>
 <ul class="blank">
 		<li><a href="/category/leveldb.html">LevelDB</a></li>
+<<<<<<< HEAD
+=======
+		<li><a href="/category/libevent.html">libevent</a></li>
+>>>>>>> 996d2db8a667a1a71f97e1dbc11c3c2c21be7e7d
 		<li><a href="/category/linux.html">Linux</a></li>
 		<li><a href="/category/others.html">Others</a></li>
 </ul>
