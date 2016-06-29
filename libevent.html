@@ -263,7 +263,7 @@ Two bufferevents that transmit data to one another.</p>
 <blockquote>
 <p>Every bufferevent has two data-related callbacks: a read callback and a write callback. By default, the read callback is called whenever any data is read from the underlying transport, and the write callback is called whenever enough data from the output buffer is emptied to the underlying transport. You can override the behavior of these functions by adjusting the read and write "watermarks" of the bufferevent.</p>
 </blockquote>
-<p>bufferevent有两个数据相关的回调函数：<code>read callback and  write callback</code>。默认情况下，<code>read callback</code>会当 从关注的socket读到了任意的数据时被调用；<code>write callback</code> 在足够的数据从output buffer传送给了对端时被调用。可以通过修改bufferevent的读写watermarks（读写水位）来修改<code>read callback and  write callback</code>的行为。</p>
+<p>bufferevent有两个数据相关的回调函数：<code>read callback and  write callback</code>。默认情况下，<code>read callback</code>会当 从关注的socket读到了任意的数据时被调用；<code>write callback</code> 在全部的数据从output buffer传送给了对端时被调用(output buffer变为空)。可以通过修改bufferevent的读写watermarks（读写水位）来修改<code>read callback and  write callback</code>的行为。</p>
 <p>4个watermarks： </p>
 <ul>
 <li>
