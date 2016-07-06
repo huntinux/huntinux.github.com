@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>STL in one article</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/stl-in-one-article.html" rel="bookmark"
+                   title="Permalink to STL in one article">STL in one article</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-07-07T09:00:00+08:00">
+                Thu 07 July 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <blockquote>
+<p>参考书籍：《标准模板库自修教程与参考手册 STL进行C++编程》</p>
+</blockquote>
+<h1>简介</h1>
+<h2>模板参数明确说明</h2>
+<p>下面的函数模板将字符数组转换为任意的容器。因为只在返回值中用了模板参数，C++规定这种情况必须在函数调用时必须明确说明模板参数类型，否则会编译出错。</p>
+<div class="highlight"><pre><span class="n">template</span> <span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Container</span><span class="o">&gt;</span>
+<span class="n">Container</span> <span class="n">make</span><span class="p">(</span><span class="k">const</span> <span class="kt">char</span> <span class="n">s</span><span class="p">[])</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">Container</span><span class="p">(</span><span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">&amp;</span><span class="n">s</span><span class="p">[</span><span class="n">strlen</span><span class="p">(</span><span class="n">s</span><span class="p">)]);</span>
+<span class="p">}</span>
+<span class="kt">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">char</span> <span class="n">arr</span><span class="p">[]</span> <span class="o">=</span> <span class="s">&quot;hello world&quot;</span><span class="p">;</span>
+    <span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">l</span> <span class="o">=</span> <span class="n">make</span><span class="o">&lt;</span><span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">arr</span><span class="p">);</span> <span class="c1">// 明确指出模板参数： 此外，这里可以使用auto：  auto l = make&lt;list&lt;int&gt;&gt;(arr); // c++11</span>
+    <span class="n">for_each</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">l</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">n</span><span class="p">){</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">char</span><span class="o">&gt;</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;});</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>默认模板参数</h2>
+<p>比如vector的定义,第二个模板参数就指定一个默认值。看来vector使用allocator来管理内存。
+如<code>vector&lt;int&gt; 与 vector&lt;int, std::allocator&lt;int&gt;&gt;</code>等价。</p>
+<div class="highlight"><pre>  <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">_Tp</span><span class="p">,</span> <span class="kr">typename</span> <span class="n">_Alloc</span> <span class="o">=</span> <span class="n">std</span><span class="o">::</span><span class="n">allocator</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="o">&gt;</span> <span class="o">&gt;</span>
+    <span class="n">class</span> <span class="n">vector</span> <span class="o">:</span> <span class="n">protected</span> <span class="n">_Vector_base</span><span class="o">&lt;</span><span class="n">_Tp</span><span class="p">,</span> <span class="n">_Alloc</span><span class="o">&gt;</span>
+</pre></div>
+
+
+<p>注意：
+同一个问题可以使用多种容器来解决，不过哪种容器最合适，需要好好选择，注意性能方面的差异。
+STL容器并没有提供过多的操作，而是提供了通用的“类属算法”。比如find，它可以用来在所有的STL容器中进行查找。所以类属算法的特点就在于可以用于许多甚至所有容器上，对于各容器来说，就没有必要定义许多成员函数，从而可以减少并简化容器间的接口。</p>
+<p>merge，可以看到该函数能够将不同类型的容器合并，是不是很灵活。</p>
+<div class="highlight"><pre>    <span class="kt">int</span> <span class="n">narr</span><span class="p">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">};</span>
+    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">nvec</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">6</span><span class="p">,</span><span class="mi">8</span><span class="p">};</span> <span class="c1">// c++11, 列表初始化</span>
+    <span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">nlist</span><span class="p">;</span>
+    <span class="n">merge</span><span class="p">(</span><span class="n">narr</span><span class="p">,</span> <span class="n">narr</span> <span class="o">+</span> <span class="mi">5</span><span class="p">,</span> <span class="n">nvec</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">nvec</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">back_inserter</span><span class="p">(</span><span class="n">nlist</span><span class="p">));</span> <span class="c1">// nlist为空，所以需要使用back_inserter</span>
+    <span class="n">for_each</span><span class="p">(</span><span class="n">nlist</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">nlist</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="p">[](</span><span class="kt">int</span> <span class="n">n</span><span class="p">){</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">n</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;});</span> <span class="c1">// c++11, lambda 表达式</span>
+</pre></div>
+
+
+<h2>迭代器</h2>
+<p><img alt="" src="https://lh3.googleusercontent.com/JWBQ8OzmwPeACDV0EYL33gBqu2UFqm24zeHToTNdWy3hBa41a4Mr1PLTD0fiaIMHxr5uMaPV4lFgnlTrmuPcwMQJrYA16e2VskA3e0URICO1UAhlaqqEFUdjLAOf3PAgTIFa77KQsByU2aojhDtYix9XOARbsem_BS9jXC2sLs-goVgueLTMb50I1aQNWCpsJz3vNorkiY6WTMg7LeepIcIGrzB2MwDGTuYJAm0Sivcuabdaq49ZWa22NIb53tBQrXYQYtEqQCyBmaNv-YPcRkPLiihhDg2kNhi-N_4566ReAW5XIANopi5mMx6tgjUTHlsdfN_6J-ylSzbXuLO6LEKXasGUe-qzhM9nhJ8e-MjbBM4ohr8kSRzLnN_FA_d1mrWfa9v1ruLM8fecYmte_KNxIMQkKayYDIqBtOyknRvv_0k3WlfDtolaqFwoqgspCsdipmLfU9hDiiMgqVwWbsC6EpFB6J24JWvl9FfhbcCMZyRQHEjYAxKssxFpgJB2_h_45uKaSMpfh8yehlyoJ8OwvQood1N39-xrNH1TslO0dGtaWwbiiF8rJd2EqWCVIdmULYBOMFQ8N3pvlFFAA5geaKqr3w=w783-h877-no" /></p>
+<p>迭代器是“连接”容器和算法等组件的桥梁。STL定义了5种迭代器：输入迭代器，输出迭代器，前向迭代器，双向迭代器，随机访问迭代器。</p>
+<p>看看自己实现一个accumulate， 为了与std::accumulate区分，这里的函数名首字母大写。</p>
+<div class="highlight"><pre><span class="n">template</span> <span class="o">&lt;</span><span class="kr">typename</span> <span class="n">InputIterator</span><span class="p">,</span> <span class="kr">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">T</span> <span class="n">Accumulate</span><span class="p">(</span><span class="n">InputIterator</span> <span class="n">first</span><span class="p">,</span> <span class="n">InputIterator</span> <span class="n">last</span><span class="p">,</span> <span class="n">T</span> <span class="n">init</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">first</span> <span class="o">!=</span> <span class="n">last</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="n">init</span> <span class="o">+</span> <span class="o">*</span><span class="n">first</span><span class="p">;</span>
+        <span class="o">++</span><span class="n">first</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">init</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>该函数用到了迭代器的<code>*</code>, <code>++</code>， <code>!=</code> 。</p>
+<p>输入迭代器： <code>*</code>, 前置/后置<code>++</code>， <code>!=</code>  <code>==</code> 这5个操作是STL对输入迭代器的规定。注意，对于输入迭代器，<code>*</code>只能用于读取，不能用于写。
+输出迭代器： 与输入迭代器一样，不过<code>*</code>只能用于写，不能用于读。
+此外还有：前向迭代器、双向迭代器、随机访问迭代器。</p>
+<p>对Accumulate进一步抽象,将+抽象为函数对象</p>
+<div class="highlight"><pre><span class="n">template</span> <span class="o">&lt;</span><span class="n">typename</span> <span class="n">InputIterator</span><span class="p">,</span> <span class="n">typename</span> <span class="n">T</span><span class="p">,</span> <span class="n">typename</span> <span class="n">BinaryOperation</span> <span class="o">&gt;</span>
+<span class="n">T</span> <span class="n">Accumulate</span><span class="p">(</span><span class="n">InputIterator</span> <span class="n">first</span><span class="p">,</span> <span class="n">InputIterator</span> <span class="k">last</span><span class="p">,</span> <span class="n">T</span> <span class="n">init</span><span class="p">,</span> <span class="n">BinaryOperation</span> <span class="n">binary_op</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">while</span><span class="p">(</span><span class="n">first</span> <span class="o">!=</span> <span class="k">last</span><span class="p">)</span> <span class="p">{</span>
+        <span class="sr">//i</span><span class="n">nit</span> <span class="o">=</span> <span class="n">init</span> <span class="o">+</span> <span class="o">*</span><span class="n">first</span><span class="o">++</span><span class="p">;</span>
+        <span class="n">init</span> <span class="o">=</span> <span class="n">binary_op</span><span class="p">(</span><span class="n">init</span><span class="p">,</span> <span class="o">*</span><span class="n">first</span><span class="p">);</span>
+        <span class="n">first</span><span class="o">++</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">return</span> <span class="n">init</span><span class="p">;</span>
+<span class="p">}</span>
+<span class="nb">int</span> <span class="n">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="nb">int</span> <span class="n">narr</span><span class="o">[]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">7</span><span class="p">,</span><span class="mi">9</span><span class="p">};</span>
+    <span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="n">Accumulate</span><span class="p">(</span><span class="n">narr</span><span class="p">,</span> <span class="n">narr</span><span class="o">+</span><span class="mi">5</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">multiplies</span><span class="sr">&lt;int&gt;</span><span class="p">())</span> <span class="o">&lt;&lt;</span> <span class="n">endl</span><span class="p">;</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>适配器</h2>
+<p>用来改变其他组件接口的组件称为适配器。</p>
+<h2>组件的互换性</h2>
+<p>STL中的算法不是用它们操作的数据结构直接定义的。相反，STL算法和容器是通过下面的方式联系起来的：</p>
+<ul>
+<li>对于某种容器，规定了它可以提供哪些类型的迭代器。</li>
+<li>对于某种算法，规定了它可以使用哪种类型的迭代器。</li>
+</ul>
+<p>STL使用迭代器，而不是直接使用数据结构定义算法，从而使得算法可以不依赖数据结构。因此迭代器是关键所在。</p>
+<h2>算法/容器兼容性</h2>
+<p>理论上，可以让所有STL算法和容器组件都能进行交互，但是STL的设计者们故意没有这么做。因为某些容器在使用某些算法时效率很低。
+比如sort，它采用的算法仅在能够随机访问数据的情况下具有较高的效率。数组、vector、dequeu提供对数据的随机访问，而list确不提供。</p>
+<div class="highlight"><pre><span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">l</span> <span class="o">=</span> <span class="p">{</span><span class="mi">4</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">,</span><span class="mi">8</span><span class="p">};</span>
+<span class="n">sort</span><span class="p">(</span><span class="n">l</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">l</span><span class="p">.</span><span class="n">end</span><span class="p">());</span> <span class="c1">// error</span>
+<span class="n">l</span><span class="p">.</span><span class="n">sort</span><span class="p">();</span> <span class="c1">// ok </span>
+
+<span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">};</span>
+<span class="n">sort</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">v</span><span class="p">.</span><span class="n">end</span><span class="p">());</span> <span class="c1">// ok</span>
+</pre></div>
+
+
+<p>将list与sort结合是错误的，为了高效的对list进行排序，list类提供了成员函数sort。</p>
+<h1>迭代器</h1>
+<p>迭代器是类似指针的对象，STL算法利用它们对存储在容器中的对象序列进行遍历。一个典型的问题是：如何才嫩知道哪种算法和哪种容器能够一起工作？ 理解5种迭代器类型是理解该问题的关键。5种迭代器：输入、输出、前向、双向、随机访问迭代器。
+算法通常使用一个迭代器区间 [first, last)，注意它是左闭右开的。
+STL将迭代器分为不同类型是为了满足某些特定算法的需求。
+请注意，输入迭代器一词不是指某种类型，而是指一系列类型。</p>
+<p>输入、输出、前向、双向、随机访问迭代器将上面的图。</p>
+<p>迭代器层次结构：
+<img alt="" src="https://lh3.googleusercontent.com/_mUkPDKaVOBMmQ_60l1HGQnokv5yrzAimIexlOJ2wY1bY_9J1Yym6SDLFjAGPNWd_JFt6jiw_e9s0s56zUy0oVlKA9ERYI-KSA6sSyXnQCqludzVkqVvccGrrm0am0R_c8pVWqmHj98lgiWthfRf0NoIBQjkoCBpvxilUkK8bM3nWj4udMI_JyNSx9lmRzXGZsPRq3vG-dkmD-cgNhKxXdOqHng3Qs9feG3LMGNVC26KYngpNtPrYEsqHqMF-VFD2v27Z9AAbof7sQIGs-aEaEuVI7RhvVBM9OyRHiGPrtDM8U-VwRd-HtJ6SdsaUNPaR8P3kQcmuY9NxvdpTyz3G7pNMFiCNkYGmKRxl6kgZ3YHShctowMbr_RWt3k2dgNsIE9Rwkq6jo3W0cbzOuBPzqn8Nz7cUEkadWSXd9-YtVRm9hBvj3UCQ62i6emZNo6PCAsM9mcGWyKLPaaTefbX919GXcDfabrvEVj16xk3I74_pRk9UMIvEwm4XBXPR4aFsNBrTO5mD-gaNCsk5wgqomWENi9RI6OgK2O394-CWsFASuqNUm8gQaHoOjgAO4PEUdZvGPCGJs2Q7ZkDgWhIVV5Rr47K3A=w854-h380-no" /></p>
+<p><img alt="" src="https://lh3.googleusercontent.com/P0FdfTx5GDJ6s5ULv33OMXF25xXsmo7jfof4tcY0WWRPE-Cm9uAiCSpGZ7nZ5_5xTIhjPLMHcZKk2e0_rS9Qf0saN4CYL3f4bAxU_PKrcgmzVfYQR3VSmPWkHCHlqX25fuwxWPxy-CCJ6Bu284afNRPrrBamw-HqUyk2e2-_N0lmldtF8y-RS6SNsAI8sTJGoOK7A1_yo0qvsGlHSAI2h451rKcvfVschDH3MIdc7-iSWpq0igOYL5wEAkT4PoM1F2xK5w4T9AE5Rjw5rMGQU7a22wDLpkwdY41t9QrxY47FEtZ7O6Ausv70-nmPEIOui5VXITF-vRVE5GZQuWlXOxgHtQ_yCDmthETQBCZhqJKm74lRp9IhvXFmxaE4yoa1Gkk8r-NXYdl1B1a4cuOKGS_muJOakig0VaZT1Piif8Qbp9Gaet5tQvebKb5P2hbft6STS4raiHsz761hYnOl2tk2d9tYH6nRQDV3Wmu8f6BPgPrfB7H5VaHY9l9HXxd03fOGlSylnWWog2bpxwbmTaY9yGSJqUOGh83Xb5btWRHkBMdq6Xv1h2dYZ3v_FAUUiAjuDxGjc2IJW4TrM9R20_3wm3TEeA=w895-h173-no" /></p>
+<h2>插入迭代器</h2>
+<p>通常情况下算法是“改写”模式，而插入迭代器将算法转入到“插入模式”。
+3种插入迭代器,它们都是类模板。</p>
+<div class="highlight"><pre><span class="n">back_insert_iterator</span><span class="o">&lt;</span><span class="n">Container</span><span class="o">&gt;</span>  <span class="c1">// 对迭代器解引用的赋值操作，使用Container的push_back</span>
+<span class="n">front_insert_iterator</span><span class="o">&lt;</span><span class="n">Container</span><span class="o">&gt;</span> <span class="c1">// 对迭代器解引用的赋值操作，使用Container的push_front</span>
+<span class="n">insert_iterator</span><span class="o">&lt;</span><span class="n">Container</span><span class="o">&gt;</span>       <span class="c1">// 对迭代器解引用的赋值操作，使用Container的insert</span>
+</pre></div>
+
+
+<p>为了使用方便，STL定义了函数模板back_inserter。</p>
+<div class="highlight"><pre><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">v</span><span class="p">;</span>                   <span class="c1">// empty</span>
+<span class="n">fill_n</span><span class="p">(</span><span class="n">v</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span>        <span class="c1">// runtime error</span>
+<span class="n">fill_n</span><span class="p">(</span><span class="n">back_insert_iterator</span><span class="o">&lt;</span><span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;&gt;</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// ok</span>
+<span class="n">fill_n</span><span class="p">(</span><span class="n">back_inserter</span><span class="p">(</span><span class="n">v</span><span class="p">),</span> <span class="mi">10</span><span class="p">,</span> <span class="mi">1</span><span class="p">);</span> <span class="c1">// ok</span>
+</pre></div>
+
+
+<p>下面是back_insert_iterator的部分源码，可以看到，该类模板重载了operator=， 是的对迭代器解引用赋值会调用Container的push_back。</p>
+<div class="highlight"><pre>      <span class="n">back_insert_iterator</span><span class="o">&amp;</span>
+      <span class="n">operator</span><span class="o">=</span><span class="p">(</span><span class="k">const</span> <span class="kr">typename</span> <span class="n">_Container</span><span class="o">::</span><span class="n">value_type</span><span class="o">&amp;</span> <span class="n">__value</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">container</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">__value</span><span class="p">);</span>
+        <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
+      <span class="p">}</span>
+
+      <span class="n">back_insert_iterator</span><span class="o">&amp;</span>
+      <span class="n">operator</span><span class="o">=</span><span class="p">(</span><span class="kr">typename</span> <span class="n">_Container</span><span class="o">::</span><span class="n">value_type</span><span class="o">&amp;&amp;</span> <span class="n">__value</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">container</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">std</span><span class="o">::</span><span class="n">move</span><span class="p">(</span><span class="n">__value</span><span class="p">));</span>
+        <span class="k">return</span> <span class="o">*</span><span class="n">this</span><span class="p">;</span>
+      <span class="p">}</span>
+</pre></div>
+
+
+<p>而back_inserter是为了方便使用而定义的，源码如下：</p>
+<div class="highlight"><pre>  <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">_Container</span><span class="o">&gt;</span>
+    <span class="kr">inline</span> <span class="n">back_insert_iterator</span><span class="o">&lt;</span><span class="n">_Container</span><span class="o">&gt;</span>
+    <span class="n">back_inserter</span><span class="p">(</span><span class="n">_Container</span><span class="o">&amp;</span> <span class="n">__x</span><span class="p">)</span>
+    <span class="p">{</span> <span class="k">return</span> <span class="n">back_insert_iterator</span><span class="o">&lt;</span><span class="n">_Container</span><span class="o">&gt;</span><span class="p">(</span><span class="n">__x</span><span class="p">);</span> <span class="p">}</span>
+</pre></div>
+
+
+<h2>流迭代器</h2>
+<ul>
+<li>istream_iterator 类， 用于输入</li>
+<li>ostream_iterator 类， 用于输出</li>
+</ul>
+<p>诸如merge的一类算法仅仅单方向遍历和读取数据对象，而无需对数据对象赋值，所以可以将这类算法用于输入迭代器。</p>
+<p>istream_iterator用法：</p>
+<div class="highlight"><pre>    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">,</span><span class="mi">5</span><span class="p">};</span> <span class="c1">// c++11，列表初始化</span>
+    <span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">list</span><span class="p">;</span>
+    <span class="n">merge</span><span class="p">(</span><span class="n">vec</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">vec</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> 
+            <span class="n">istream_iterator</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cin</span><span class="p">),</span>
+            <span class="n">istream_iterator</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(),</span> <span class="c1">// 代表输入迭代器结束标志</span>
+            <span class="n">back_inserter</span><span class="p">(</span><span class="n">list</span><span class="p">));</span>
+</pre></div>
+
+
+<p>ostream_iterator用法：</p>
+<div class="highlight"><pre>    <span class="n">vector</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">vec</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">};</span>
+    <span class="n">list</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span> <span class="n">list</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">};</span>
+    <span class="n">merge</span><span class="p">(</span><span class="n">vec</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">vec</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span> <span class="n">list</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span> <span class="n">list</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+            <span class="n">ostream_iterator</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">cout</span><span class="p">,</span> <span class="s">&quot; &quot;</span><span class="p">));</span>
+</pre></div>
+
+
+<p>可以通过查看算法的定义来确定算法要求使用哪种迭代器。查看merge的定义可以看到它要求前4个参数是输入迭代器，第5个是输出迭代器。</p>
+<div class="highlight"><pre><span class="n">template</span> <span class="o">&lt;</span><span class="n">class</span> <span class="n">InputIterator1</span><span class="p">,</span> <span class="n">class</span> <span class="n">InputIterator2</span><span class="p">,</span> <span class="n">class</span> <span class="n">OutputIterator</span><span class="o">&gt;</span>
+  <span class="n">OutputIterator</span> <span class="n">merge</span> <span class="p">(</span><span class="n">InputIterator1</span> <span class="n">first1</span><span class="p">,</span> <span class="n">InputIterator1</span> <span class="n">last1</span><span class="p">,</span>
+                        <span class="n">InputIterator2</span> <span class="n">first2</span><span class="p">,</span> <span class="n">InputIterator2</span> <span class="n">last2</span><span class="p">,</span>
+                        <span class="n">OutputIterator</span> <span class="n">result</span><span class="p">)</span>
+</pre></div>
+
+
+<p>注意：对于set和multiset，它们的iterator和const_iterator的类型都是<strong>常量</strong>双向迭代器。原因是，对于set和multiset，修改键值的唯一方法是先删除然后再插入（delete---&gt; insert）。对于map和multimap也有类似的限制，<code>map&lt;Key, T&gt;</code>对象中存储的类型是<code>pair&lt;const Key, T&gt;</code>，其中键的部分不能直接修改，但可以修改值T。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "stl-in-one-article.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
