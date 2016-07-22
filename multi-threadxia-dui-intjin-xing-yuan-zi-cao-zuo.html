@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Multi-Thread下对int进行原子操作</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/multi-threadxia-dui-intjin-xing-yuan-zi-cao-zuo.html" rel="bookmark"
+                   title="Permalink to Multi-Thread下对int进行原子操作">Multi-Thread下对int进行原子操作</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-07-21T09:00:00+08:00">
+                Thu 21 July 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h2>原文链接</h2>
+<p>这是一系列文章，作者做了详细的讨论。</p>
+<blockquote>
+<p>http://www.alexonlinux.com/do-you-need-mutex-to-protect-int</p>
+<p>http://www.alexonlinux.com/pthread-spinlocks</p>
+<p>http://www.alexonlinux.com/multithreaded-simple-data-type-access-and-atomic-variables</p>
+</blockquote>
+<h2>学习总结</h2>
+<p>作者首先提出了一个问题：是否需要用mutex对int进行protect，对一个int使用mutex或semaphore进行保护开销太大了，然后得出结论是使用spinlock，即自旋锁（busy-wait），比较合适。但是在获取自旋锁时要记得不能进行其他较为耗时的操作。</p>
+<blockquote>
+<p>Intel x86 and x86_64 processor architectures (as well as vast majority of other modern CPU architectures) has instructions that allow one to lock FSB, while doing some memory access. FSB stands for Front Serial Bus. This is the bus that processor use to communicate with RAM. I.e. locking FSB will prevent from any other processor (core), and process running on that processor, from accessing RAM. And this is exactly what we need to implement atomic variables.
+Atomic variables being widely used in kernel, but from some reason no-one bothered to implement them for user-mode folks. Until gcc 4.1.2.</p>
+</blockquote>
+<p>作者提到，Intel x86/x86_64处理器架构有只允许单独锁住FSB的指令。FSB即为Front Serial Bus，处理器使用该总线与RAM交互。某个处理器（记为A）锁住FSB之后，其他处理器，以及在A上运行的进程都不能访问RAM，因此可以使用这一点实现atomic variable。
+atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可以在用户模式下使用。</p>
+<h2>相关函数</h2>
+<p>这些函数都是built-in函数，不需要包含头文件</p>
+<div class="highlight"><pre><span class="c1">// 先获取变量值再改变它</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_add</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_sub</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_or</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_and</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_xor</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_nand</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+
+<span class="c1">// 先改变变量再获取它</span>
+<span class="n">type</span> <span class="n">__sync_add_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_sub_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_or_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_and_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_xor_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_nand_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+
+<span class="cm">/*</span>
+<span class="cm">type in each of the expressions can be one of the following:</span>
+
+<span class="cm">    int</span>
+<span class="cm">    unsigned int</span>
+<span class="cm">    long</span>
+<span class="cm">    unsigned long</span>
+<span class="cm">    long long</span>
+<span class="cm">    unsigned long long</span>
+<span class="cm">*/</span>
+</pre></div>
+
+
+<h2>测试程序</h2>
+<div class="highlight"><pre><span class="cp">#define _GNU_SOURCE</span>
+<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include &lt;pthread.h&gt;</span>
+<span class="cp">#include &lt;unistd.h&gt;</span>
+<span class="cp">#include &lt;stdlib.h&gt;</span>
+<span class="cp">#include &lt;sched.h&gt;</span>
+<span class="cp">#include &lt;linux/unistd.h&gt;</span>
+<span class="cp">#include &lt;sys/syscall.h&gt;</span>
+<span class="cp">#include &lt;errno.h&gt;</span>
+
+<span class="cp">#define INC_TO 1000000 </span><span class="c1">// one million...</span>
+
+<span class="kt">int</span> <span class="n">global_int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+<span class="n">pid_t</span> <span class="nf">gettid</span><span class="p">(</span> <span class="kt">void</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="k">return</span> <span class="n">syscall</span><span class="p">(</span> <span class="n">__NR_gettid</span> <span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="o">*</span><span class="nf">thread_routine</span><span class="p">(</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span> <span class="p">)</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">proc_num</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="kt">long</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
+    <span class="n">cpu_set_t</span> <span class="n">set</span><span class="p">;</span>
+
+    <span class="n">CPU_ZERO</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">);</span>
+    <span class="n">CPU_SET</span><span class="p">(</span> <span class="n">proc_num</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">);</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">sched_setaffinity</span><span class="p">(</span> <span class="n">gettid</span><span class="p">(),</span> <span class="k">sizeof</span><span class="p">(</span> <span class="n">cpu_set_t</span> <span class="p">),</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">))</span>
+    <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span> <span class="s">&quot;sched_setaffinity&quot;</span> <span class="p">);</span>
+        <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">INC_TO</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="c1">// global_int++; // 不使用原子操作，结果是不对的，不过作者指出加上-O2能得到正确结果</span>
+        <span class="n">__sync_fetch_and_add</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">global_int</span><span class="p">,</span> <span class="mi">1</span> <span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="kt">int</span> <span class="n">procs</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+    <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
+    <span class="n">pthread_t</span> <span class="o">*</span><span class="n">thrs</span><span class="p">;</span>
+
+    <span class="c1">// Getting number of CPUs</span>
+    <span class="n">procs</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)</span><span class="n">sysconf</span><span class="p">(</span> <span class="n">_SC_NPROCESSORS_ONLN</span> <span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">procs</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span> <span class="s">&quot;sysconf&quot;</span> <span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">thrs</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span> <span class="k">sizeof</span><span class="p">(</span> <span class="n">pthread_t</span> <span class="p">)</span> <span class="o">*</span> <span class="n">procs</span> <span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">thrs</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="n">perror</span><span class="p">(</span> <span class="s">&quot;malloc&quot;</span> <span class="p">);</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="n">printf</span><span class="p">(</span> <span class="s">&quot;Starting %d threads...</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">procs</span> <span class="p">);</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+    <span class="p">{</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">pthread_create</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">thrs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">thread_routine</span><span class="p">,</span>
+            <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="kt">long</span><span class="p">)</span><span class="n">i</span> <span class="p">))</span>
+        <span class="p">{</span>
+            <span class="n">perror</span><span class="p">(</span> <span class="s">&quot;pthread_create&quot;</span> <span class="p">);</span>
+            <span class="n">procs</span> <span class="o">=</span> <span class="n">i</span><span class="p">;</span>
+            <span class="k">break</span><span class="p">;</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+
+    <span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+        <span class="n">pthread_join</span><span class="p">(</span> <span class="n">thrs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span> <span class="p">);</span>
+
+    <span class="n">free</span><span class="p">(</span> <span class="n">thrs</span> <span class="p">);</span>
+
+    <span class="n">printf</span><span class="p">(</span> <span class="s">&quot;After doing all the math, global_int value is: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span>
+        <span class="n">global_int</span> <span class="p">);</span>
+    <span class="n">printf</span><span class="p">(</span> <span class="s">&quot;Expected value is: %d</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">INC_TO</span> <span class="o">*</span> <span class="n">procs</span> <span class="p">);</span>
+
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>编译</p>
+<div class="highlight"><pre><span class="nv">$ </span>gcc -pthread yourfilename
+</pre></div>
+
+
+<p>程序首先获取处理器个数N，然后创建N个线程分别在N个处理器上运行（原来还可以这么完&gt;_&lt;）。这四个线程都对<code>global_int</code>进行加1操作，正确结果应该是1000000×N。如果不进行一些同步控制（mutex、semaphore、spinlock）或使用上面提到的built-in原子操作函数，那么结果是随机的。尽管加上-O2也能得到正确结果，但是还是使用原子操作比较合理。</p>
+<h2>一些细节</h2>
+<div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">pthread_create</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">thrs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">thread_routine</span><span class="p">,</span>
+    <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="kt">long</span><span class="p">)</span><span class="n">i</span> <span class="p">))</span>
+  <span class="c1">// ...</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>注意<code>pthread_create</code>传递的最后一个参数是否会出现“竞争”。这里的代码不会出现。因为i是以值传递过去的。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "multi-threadxia-dui-intjin-xing-yuan-zi-cao-zuo.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
