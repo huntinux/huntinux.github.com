@@ -2,7 +2,7 @@ Title: Muduo : Thread
 Date: 2016-07-23 09:00
 Modified: 2016-07-23 09:09:37
 Category: Muduo 
-Tags: Muduo, Multithread，Network
+Tags: Muduo, Multithread, Network
 Slug: 
 Author: hongjin.cao 
 Summary: 分析了Muduo中Thread的实现。
@@ -31,7 +31,7 @@ Summary: 分析了Muduo中Thread的实现。
 ```
 知道这一点理解tid()就很容易了。
 
-```
+```c
 // CurrentThread.h
 
 namespace CurrentThread
