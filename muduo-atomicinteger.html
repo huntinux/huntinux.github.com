@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : AtomicInteger</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-atomicinteger.html" rel="bookmark"
+                   title="Permalink to Muduo : AtomicInteger">Muduo : AtomicInteger</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-07-24T09:00:00+08:00">
+                Sun 24 July 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <blockquote>
+<p>https://gcc.gnu.org/onlinedocs/gcc-4.4.3/gcc/Atomic-Builtins.html</p>
+<p>http://blog.csdn.net/huntinux/article/details/51994877</p>
+</blockquote>
+<p>上面这篇文章学习了Linux下的无锁原子操作，使用的是gcc的built-in函数：</p>
+<div class="highlight"><pre><span class="c1">// 先获取变量值再改变它</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_add</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_sub</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_or</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_and</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_xor</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_fetch_and_nand</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+
+<span class="c1">// 先改变变量再获取它</span>
+<span class="n">type</span> <span class="n">__sync_add_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_sub_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_or_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_and_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_xor_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="n">__sync_nand_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+
+<span class="cm">/*</span>
+<span class="cm">type in each of the expressions can be one of the following:</span>
+
+<span class="cm">    int</span>
+<span class="cm">    unsigned int</span>
+<span class="cm">    long</span>
+<span class="cm">    unsigned long</span>
+<span class="cm">    long long</span>
+<span class="cm">    unsigned long long</span>
+<span class="cm">*/</span>
+
+<span class="n">bool</span> <span class="n">__sync_bool_compare_and_swap</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">oldval</span> <span class="n">type</span> <span class="n">newval</span><span class="p">,</span> <span class="p">...)</span>
+<span class="n">type</span> <span class="n">__sync_val_compare_and_swap</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">oldval</span> <span class="n">type</span> <span class="n">newval</span><span class="p">,</span> <span class="p">...)</span>
+
+<span class="cm">/*</span>
+<span class="cm">这两个函数提供原子的比较和交换，如果*ptr == oldval,就将newval写入*ptr,</span>
+<span class="cm">第一个函数在相等并写入的情况下返回true.</span>
+<span class="cm">第二个函数在返回操作之前的值。*/</span>
+</pre></div>
+
+
+<p>muduo正是使用的这些built-in函数实现了AtomicIntegerT，它是一个类模板。成员变量value_存放数值。muduo封装的Thread类中便使用了该类模板，统计产生了多少个线程。</p>
+<div class="highlight"><pre><span class="n">namespace</span> <span class="n">muduo</span>
+<span class="p">{</span>
+
+<span class="n">namespace</span> <span class="n">detail</span>
+<span class="p">{</span>
+<span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">T</span><span class="o">&gt;</span>
+<span class="n">class</span> <span class="n">AtomicIntegerT</span> <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
+<span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="n">AtomicIntegerT</span><span class="p">()</span>
+    <span class="o">:</span> <span class="n">value_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+  <span class="p">}</span>
+
+  <span class="c1">// uncomment if you need copying and assignment</span>
+  <span class="c1">//</span>
+  <span class="c1">// AtomicIntegerT(const AtomicIntegerT&amp; that)</span>
+  <span class="c1">//   : value_(that.get())</span>
+  <span class="c1">// {}</span>
+  <span class="c1">//</span>
+  <span class="c1">// AtomicIntegerT&amp; operator=(const AtomicIntegerT&amp; that)</span>
+  <span class="c1">// {</span>
+  <span class="c1">//   getAndSet(that.get());</span>
+  <span class="c1">//   return *this;</span>
+  <span class="c1">// }</span>
+
+  <span class="n">T</span> <span class="n">get</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="c1">// in gcc &gt;= 4.7: __atomic_load_n(&amp;value_, __ATOMIC_SEQ_CST)</span>
+    <span class="k">return</span> <span class="n">__sync_val_compare_and_swap</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value_</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">);</span> <span class="c1">// 如果value_为0，那么将value_设置为0，并返回0</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span> <span class="n">getAndAdd</span><span class="p">(</span><span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// in gcc &gt;= 4.7: __atomic_fetch_add(&amp;value_, x, __ATOMIC_SEQ_CST)</span>
+    <span class="k">return</span> <span class="n">__sync_fetch_and_add</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value_</span><span class="p">,</span> <span class="n">x</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span> <span class="n">addAndGet</span><span class="p">(</span><span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">getAndAdd</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">+</span> <span class="n">x</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span> <span class="n">incrementAndGet</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">addAndGet</span><span class="p">(</span><span class="mi">1</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span> <span class="n">decrementAndGet</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="k">return</span> <span class="n">addAndGet</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">add</span><span class="p">(</span><span class="n">T</span> <span class="n">x</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">getAndAdd</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">increment</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">incrementAndGet</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">decrement</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">decrementAndGet</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="n">T</span> <span class="n">getAndSet</span><span class="p">(</span><span class="n">T</span> <span class="n">newValue</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// in gcc &gt;= 4.7: __atomic_store_n(&amp;value, newValue, __ATOMIC_SEQ_CST)</span>
+    <span class="k">return</span> <span class="n">__sync_lock_test_and_set</span><span class="p">(</span><span class="o">&amp;</span><span class="n">value_</span><span class="p">,</span> <span class="n">newValue</span><span class="p">);</span> <span class="c1">// 返回原值，然后设置成新值newValue</span>
+  <span class="p">}</span>
+
+ <span class="nl">private:</span>
+  <span class="k">volatile</span> <span class="n">T</span> <span class="n">value_</span><span class="p">;</span>
+<span class="p">};</span>
+<span class="p">}</span>
+
+<span class="k">typedef</span> <span class="n">detail</span><span class="o">::</span><span class="n">AtomicIntegerT</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span> <span class="n">AtomicInt32</span><span class="p">;</span>
+<span class="k">typedef</span> <span class="n">detail</span><span class="o">::</span><span class="n">AtomicIntegerT</span><span class="o">&lt;</span><span class="kt">int64_t</span><span class="o">&gt;</span> <span class="n">AtomicInt64</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>最后使用typedef定义了AtomicInt32和AtomicInt64，方便使用。</p>
+<p>C++11中提供了<code>std::atomic&lt;T&gt;</code>:</p>
+<blockquote>
+<p>http://www.cplusplus.com/reference/atomic/atomic/</p>
+</blockquote>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-atomicinteger.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
