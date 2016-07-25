@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : Condition</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-condition.html" rel="bookmark"
+                   title="Permalink to Muduo : Condition">Muduo : Condition</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-07-25T11:00:00+08:00">
+                Mon 25 July 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <blockquote>
+<p>https://github.com/chenshuo/muduo/blob/master/muduo/base/Condition.h</p>
+</blockquote>
+<p>前面分析了互斥锁MutexLock的实现，这里分析一下条件变量Condition的实现。条件变量需要一个互斥锁来保护。关于互斥锁和条件变量的基本用法见<a href="http://blog.csdn.net/huntinux/article/details/51384065">这里</a>。</p>
+<h2>成员变量</h2>
+<div class="highlight"><pre>  <span class="n">MutexLock</span><span class="o">&amp;</span> <span class="n">mutex_</span><span class="p">;</span>
+  <span class="n">pthread_cond_t</span> <span class="n">pcond_</span><span class="p">;</span>
+</pre></div>
+
+
+<p><code>mutex_</code>是个引用型变量，用来保护条件变量<code>pcond_</code>。</p>
+<h2>构造/析构</h2>
+<div class="highlight"><pre>  <span class="n">explicit</span> <span class="nf">Condition</span><span class="p">(</span><span class="n">MutexLock</span><span class="o">&amp;</span> <span class="n">mutex</span><span class="p">)</span>
+    <span class="o">:</span> <span class="n">mutex_</span><span class="p">(</span><span class="n">mutex</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_cond_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">));</span>
+  <span class="p">}</span>
+  <span class="o">~</span><span class="n">Condition</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_cond_destroy</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">));</span>
+  <span class="p">}</span>
+</pre></div>
+
+
+<p>构造函数为explicit，必须显示调用。<code>pcond_</code>的初始化使用<code>pthread_cond_init</code>。析构时使用<code>pthread_cond_destroy</code>。都使用MCHECK来检测返回值是否是成功，失败时终止程序。</p>
+<h2>唤醒等待的线程</h2>
+<div class="highlight"><pre>  <span class="n">void</span> <span class="n">notify</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_cond_signal</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">));</span> <span class="sr">//</span> <span class="err">通知一个</span>
+  <span class="p">}</span>
+
+  <span class="n">void</span> <span class="n">notifyAll</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_cond_broadcast</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">));</span> <span class="sr">//</span> <span class="err">通知所有</span>
+  <span class="p">}</span>
+</pre></div>
+
+
+<h2>进行等待</h2>
+<p>下面两个函数其实就是对<code>pthread_cond_wait</code>和<code>pthread_cond_timewait</code>的wrapper。</p>
+<div class="highlight"><pre>  <span class="kt">void</span> <span class="nf">wait</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">MutexLock</span><span class="o">::</span><span class="n">UnassignGuard</span> <span class="n">ug</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span> 
+    <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">,</span> <span class="n">mutex_</span><span class="p">.</span><span class="n">getPthreadMutex</span><span class="p">()));</span>
+  <span class="p">}</span>
+
+  <span class="c1">// returns true if time out, false otherwise.</span>
+  <span class="n">bool</span> <span class="n">waitForSeconds</span><span class="p">(</span><span class="kt">int</span> <span class="n">seconds</span><span class="p">);</span>
+</pre></div>
+
+
+<h3>wait()</h3>
+<div class="highlight"><pre>  <span class="kt">void</span> <span class="nf">wait</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">MutexLock</span><span class="o">::</span><span class="n">UnassignGuard</span> <span class="n">ug</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span> 
+    <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_cond_wait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">,</span> <span class="n">mutex_</span><span class="p">.</span><span class="n">getPthreadMutex</span><span class="p">()));</span>
+  <span class="p">}</span>
+</pre></div>
+
+
+<p>在执行等待之前，使用UnassignGuard的构造函数将<code>mutex_</code>的holder清空（因为当前线程会休眠，暂时失去对<code>mutex_</code>的所有权）。接着调用<code>pthread_cond_wait</code>等待其他线程的通知。当其他某个线程调用了notify/notifyAll时，当前线程被唤醒，接着在wait返回时，UnassignGuard的析构函数自动将<code>mutex_</code>的holder设置为当前线程。</p>
+<h3>waitForSeconds()</h3>
+<div class="highlight"><pre><span class="sr">//</span> <span class="n">returns</span> <span class="n">true</span> <span class="k">if</span> <span class="nb">time</span> <span class="n">out</span><span class="p">,</span> <span class="n">false</span> <span class="n">otherwise</span><span class="o">.</span>
+<span class="n">bool</span> <span class="nn">muduo::Condition::</span><span class="n">waitForSeconds</span><span class="p">(</span><span class="nb">int</span> <span class="n">seconds</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">struct</span> <span class="n">timespec</span> <span class="n">abstime</span><span class="p">;</span>
+  <span class="sr">//</span> <span class="n">FIXME:</span> <span class="k">use</span> <span class="n">CLOCK_MONOTONIC</span> <span class="ow">or</span> <span class="n">CLOCK_MONOTONIC_RAW</span> <span class="n">to</span> <span class="n">prevent</span> <span class="nb">time</span> <span class="n">rewind</span><span class="o">.</span>
+  <span class="n">clock_gettime</span><span class="p">(</span><span class="n">CLOCK_REALTIME</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">abstime</span><span class="p">);</span>
+  <span class="n">abstime</span><span class="o">.</span><span class="n">tv_sec</span> <span class="o">+=</span> <span class="n">seconds</span><span class="p">;</span>
+  <span class="nn">MutexLock::</span><span class="n">UnassignGuard</span> <span class="n">ug</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+  <span class="k">return</span> <span class="n">ETIMEDOUT</span> <span class="o">==</span> <span class="n">pthread_cond_timedwait</span><span class="p">(</span><span class="o">&amp;</span><span class="n">pcond_</span><span class="p">,</span> <span class="n">mutex_</span><span class="o">.</span><span class="n">getPthreadMutex</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">abstime</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>waitForSeconds行为与wait类似，只是多了个等待时间。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-condition.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
