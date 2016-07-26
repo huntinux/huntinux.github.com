@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : ThreadPool</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-threadpool.html" rel="bookmark"
+                   title="Permalink to Muduo : ThreadPool">Muduo : ThreadPool</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-07-26T11:00:00+08:00">
+                Tue 26 July 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao-summary-fen-xi-liao-muduozhong-threadpoolde-shi-xian-xian-cheng-chi-threadpoolyong-dao-liao-qian-mian-fen-xi-de-thread-mutexlock-condition-threadpoolke-yi-she-zhi-gong-zuo-xian-cheng-de-shu-liang-bing-xiang-ren-wu-dui-lie-fang-ru-ren-wu-fang-ru-dao-ren-wu-dui-lie-zhong-de-ren-wu-jiang-you-mou-ge-gong-zuo-xian-cheng-zhi-xing.html"> hongjin.cao Summary: 分析了Muduo中ThreadPool的实现。 线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <blockquote>
+<p>https://github.com/chenshuo/muduo/blob/master/muduo/base/ThreadPool.h</p>
+<p>https://github.com/chenshuo/muduo/blob/master/muduo/base/ThreadPool.cc</p>
+</blockquote>
+<p>线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。</p>
+<h1>成员变量</h1>
+<div class="highlight"><pre> <span class="nl">private:</span>
+  <span class="n">mutable</span> <span class="n">MutexLock</span> <span class="n">mutex_</span><span class="p">;</span> <span class="c1">// mutable的，表示在const函数中也可以改变它</span>
+  <span class="n">Condition</span> <span class="n">notEmpty_</span><span class="p">;</span> <span class="c1">// 任务队列queue_不为空了，有任务可以执行了，进而唤醒等待的线程</span>
+  <span class="n">Condition</span> <span class="n">notFull_</span><span class="p">;</span>  <span class="c1">// 任务队列queue_不满了，有空间可以使用了，进而唤醒等待的线程</span>
+
+  <span class="n">string</span> <span class="n">name_</span><span class="p">;</span>
+  <span class="n">Task</span> <span class="n">threadInitCallback_</span><span class="p">;</span> <span class="c1">// 线程初始化函数</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">ptr_vector</span><span class="o">&lt;</span><span class="n">muduo</span><span class="o">::</span><span class="n">Thread</span><span class="o">&gt;</span> <span class="n">threads_</span><span class="p">;</span> <span class="c1">// 工作线程容器</span>
+  <span class="n">std</span><span class="o">::</span><span class="n">deque</span><span class="o">&lt;</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">queue_</span><span class="p">;</span> <span class="c1">// 任务队列</span>
+  <span class="kt">size_t</span> <span class="n">maxQueueSize_</span><span class="p">;</span> <span class="c1">// 队列最大大小</span>
+  <span class="n">bool</span> <span class="n">running_</span><span class="p">;</span>
+</pre></div>
+
+
+<p>使用<a href="http://www.boost.org/doc/libs/1_61_0/libs/ptr_container/doc/ptr_container.html">boost::ptr_vector</a>存放Thead。</p>
+<p>每个Task都是<code>typedef boost::function&lt;void ()&gt; Task; 所有任务都放到</code>queue_<code>中。需要使用条件变量来维护线程将的同步，比如：通知其他线程有任务到来了，可以向任务队列放任务了等等。</code></p>
+<h1>构造/析构</h1>
+<div class="highlight"><pre><span class="n">ThreadPool</span><span class="o">::</span><span class="n">ThreadPool</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">nameArg</span><span class="p">)</span>
+  <span class="o">:</span> <span class="n">mutex_</span><span class="p">(),</span>
+    <span class="n">notEmpty_</span><span class="p">(</span><span class="n">mutex_</span><span class="p">),</span>
+    <span class="n">notFull_</span><span class="p">(</span><span class="n">mutex_</span><span class="p">),</span>
+    <span class="n">name_</span><span class="p">(</span><span class="n">nameArg</span><span class="p">),</span>
+    <span class="n">maxQueueSize_</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span>
+    <span class="n">running_</span><span class="p">(</span><span class="nb">false</span><span class="p">)</span>
+<span class="p">{</span>
+<span class="p">}</span>
+
+<span class="n">ThreadPool</span><span class="o">::~</span><span class="n">ThreadPool</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">running_</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">stop</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>构造函数对成员变量进行初始化（使用初始化列表），没什么可说的。
+析构函数会调用stop， 唤醒所有休眠的线程，然后等待所有线程处理完。</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">stop</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="p">{</span> <span class="c1">// new scope</span>
+  <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span> <span class="c1">// ctor of MutexLockGuard will lock mutex_</span>
+  <span class="n">running_</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+  <span class="n">notEmpty_</span><span class="p">.</span><span class="n">notifyAll</span><span class="p">();</span> <span class="c1">// 唤醒所有休眠的工作线程</span>
+  <span class="p">}</span> <span class="c1">// dtor of MutexLockGuard will unlock mutex_</span>
+  <span class="n">for_each</span><span class="p">(</span><span class="n">threads_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span>
+           <span class="n">threads_</span><span class="p">.</span><span class="n">end</span><span class="p">(),</span>
+           <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">muduo</span><span class="o">::</span><span class="n">Thread</span><span class="o">::</span><span class="n">join</span><span class="p">,</span> <span class="n">_1</span><span class="p">));</span> <span class="c1">// 等待所有工作线程结束</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>线程池start()</h1>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="kt">int</span> <span class="n">numThreads</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">threads_</span><span class="p">.</span><span class="n">empty</span><span class="p">());</span>
+  <span class="n">running_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="n">threads_</span><span class="p">.</span><span class="n">reserve</span><span class="p">(</span><span class="n">numThreads</span><span class="p">);</span> <span class="c1">// 保证threads_容量至少为numThreads</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">numThreads</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// 创建工作线程，线程函数为ThreadPool::runInThread</span>
+    <span class="kt">char</span> <span class="n">id</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
+    <span class="n">snprintf</span><span class="p">(</span><span class="n">id</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">id</span><span class="p">,</span> <span class="s">&quot;%d&quot;</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">);</span>
+    <span class="n">threads_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">new</span> <span class="n">muduo</span><span class="o">::</span><span class="n">Thread</span><span class="p">(</span>
+          <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ThreadPool</span><span class="o">::</span><span class="n">runInThread</span><span class="p">,</span> <span class="n">this</span><span class="p">),</span> <span class="n">name_</span><span class="o">+</span><span class="n">id</span><span class="p">));</span>
+    <span class="n">threads_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">start</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">numThreads</span> <span class="o">==</span> <span class="mi">0</span> <span class="o">&amp;&amp;</span> <span class="n">threadInitCallback_</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">threadInitCallback_</span><span class="p">();</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>参数为线程数量，会创建相应数量的线程，执行体为ThreadPool::runInThread。</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">runInThread</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">try</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">threadInitCallback_</span><span class="p">)</span> <span class="c1">// 如果设置了，就执行它，进行一些初始化设置</span>
+    <span class="p">{</span>
+      <span class="n">threadInitCallback_</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">running_</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">Task</span> <span class="n">task</span><span class="p">(</span><span class="n">take</span><span class="p">());</span> <span class="c1">// 从任务队列取出一个任务，执行它</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">task</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">task</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="n">catch</span> <span class="p">(</span><span class="k">const</span> <span class="n">Exception</span><span class="o">&amp;</span> <span class="n">ex</span><span class="p">)</span> <span class="c1">// 异常处理</span>
+  <span class="p">{</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;exception caught in ThreadPool %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">name_</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;reason: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ex</span><span class="p">.</span><span class="n">what</span><span class="p">());</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;stack trace: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ex</span><span class="p">.</span><span class="n">stackTrace</span><span class="p">());</span>
+    <span class="n">abort</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">catch</span> <span class="p">(</span><span class="k">const</span> <span class="n">std</span><span class="o">::</span><span class="n">exception</span><span class="o">&amp;</span> <span class="n">ex</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;exception caught in ThreadPool %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">name_</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;reason: %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">ex</span><span class="p">.</span><span class="n">what</span><span class="p">());</span>
+    <span class="n">abort</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">catch</span> <span class="p">(...)</span>
+  <span class="p">{</span>
+    <span class="n">fprintf</span><span class="p">(</span><span class="n">stderr</span><span class="p">,</span> <span class="s">&quot;unknown exception caught in ThreadPool %s</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="n">name_</span><span class="p">.</span><span class="n">c_str</span><span class="p">());</span>
+    <span class="n">throw</span><span class="p">;</span> <span class="c1">// rethrow</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>获取一个task</h1>
+<div class="highlight"><pre><span class="n">ThreadPool</span><span class="o">::</span><span class="n">Task</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">take</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+  <span class="c1">// always use a while-loop, due to spurious wakeup</span>
+  <span class="k">while</span> <span class="p">(</span><span class="n">queue_</span><span class="p">.</span><span class="n">empty</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">running_</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">notEmpty_</span><span class="p">.</span><span class="n">wait</span><span class="p">();</span> <span class="c1">// 没有任务，则等待（利用条件变量）</span>
+  <span class="p">}</span>
+  <span class="n">Task</span> <span class="n">task</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">queue_</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span> <span class="c1">// 有任务了，就返回一个任务</span>
+  <span class="p">{</span>
+    <span class="n">task</span> <span class="o">=</span> <span class="n">queue_</span><span class="p">.</span><span class="n">front</span><span class="p">();</span>
+    <span class="n">queue_</span><span class="p">.</span><span class="n">pop_front</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">maxQueueSize_</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">notFull_</span><span class="p">.</span><span class="n">notify</span><span class="p">();</span> <span class="c1">// 通知某个等待向队列放入task的线程</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">task</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>条件变量的wait操作使用while包裹，预防“虚假唤醒”（如被其他线程抢占了）。</p>
+<h1>向线程池添加task</h1>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">run</span><span class="p">(</span><span class="k">const</span> <span class="n">Task</span><span class="o">&amp;</span> <span class="n">task</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">threads_</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="n">task</span><span class="p">();</span> <span class="c1">// 如果没有子线程，就在主线程中执行该task</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="k">while</span> <span class="p">(</span><span class="n">isFull</span><span class="p">())</span> <span class="c1">// 如果task队列queue_满了，就等待</span>
+    <span class="p">{</span>
+      <span class="n">notFull_</span><span class="p">.</span><span class="n">wait</span><span class="p">();</span>
+    <span class="p">}</span>
+    <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">isFull</span><span class="p">());</span>
+
+    <span class="n">queue_</span><span class="p">.</span><span class="n">push_back</span><span class="p">(</span><span class="n">task</span><span class="p">);</span> <span class="c1">// 将任务加入队列</span>
+    <span class="n">notEmpty_</span><span class="p">.</span><span class="n">notify</span><span class="p">();</span> <span class="c1">// 通知某个等待从queue_中取task的线程</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>使用示例</h1>
+<div class="highlight"><pre><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
+<span class="nl">public:</span>
+    <span class="kt">void</span> <span class="n">DoWork</span><span class="p">()</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;run member function in thread:&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="kt">void</span> <span class="n">operator</span><span class="p">()</span> <span class="p">(){</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;run functor in thread:&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="p">}</span>
+<span class="p">};</span>
+
+<span class="kt">void</span> <span class="nf">Task1</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;function run in thread:&quot;</span>  <span class="o">&lt;&lt;</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+<span class="p">}</span>
+
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">ThreadPool</span> <span class="n">tp</span><span class="p">(</span><span class="s">&quot;TestThreadPool&quot;</span><span class="p">);</span>
+    <span class="n">tp</span><span class="p">.</span><span class="n">setMaxQueueSize</span><span class="p">(</span><span class="mi">10</span><span class="p">);</span>
+
+    <span class="n">tp</span><span class="p">.</span><span class="n">start</span><span class="p">(</span><span class="mi">4</span><span class="p">);</span> <span class="c1">// 启动4个工作线程，启动之后，由于任务队列queue_为空，所以所有工作线程都休眠了</span>
+    <span class="n">tp</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">Task1</span><span class="p">);</span> <span class="c1">// 放入一个task，会唤醒某个工作线程</span>
+
+    <span class="n">Foo</span> <span class="n">f</span><span class="p">;</span>
+    <span class="n">tp</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Foo</span><span class="o">::</span><span class="n">DoWork</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">f</span><span class="p">));</span>
+    <span class="n">tp</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
+
+    <span class="n">tp</span><span class="p">.</span><span class="n">run</span><span class="p">(</span> <span class="p">[](){</span> <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;lambda function run in thread:&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span> <span class="p">});</span>
+
+    <span class="k">typedef</span> <span class="kt">void</span><span class="p">(</span><span class="o">*</span><span class="n">pFunc</span><span class="p">)();</span>
+    <span class="n">pFunc</span> <span class="n">pf</span> <span class="o">=</span> <span class="n">Task1</span><span class="p">;</span>
+    <span class="n">tp</span><span class="p">.</span><span class="n">run</span><span class="p">(</span><span class="n">pf</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>可以看到，ThreadPool可以很方便的将某个task放到任务队列中，该task会由某个线程执行。task使用boost::function表示，可以方便地将函数指针、普通函数、成员函数（结合boost::bind）、lambda、重载了函数调用运算符‘()’的类的对象（这些统称为可调用对象）放入到任务队列当中，非常方便。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-threadpool.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
