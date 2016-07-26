@@ -4,7 +4,8 @@ Modified: 2016-07-26 11:09:37
 Category: Muduo 
 Tags: Muduo, Multithread, Network, ThreadPool 
 Slug: 
-Author: hongjin.cao Summary: 分析了Muduo中ThreadPool的实现。 线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。
+Author: hongjin.cao 
+Summary: 分析了Muduo中ThreadPool的实现。 线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。
 
 > https://github.com/chenshuo/muduo/blob/master/muduo/base/ThreadPool.h
 

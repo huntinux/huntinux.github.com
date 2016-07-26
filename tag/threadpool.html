@@ -55,22 +55,10 @@
                                 <footer class="post-info">
                                     <abbr class="published" title="2016-07-26T11:00:00+08:00"> Tue 26 July 2016 </abbr>
                                     <address class="vcard author">By 
-                                    <a class="url fn" href="/author/hongjincao-summary-fen-xi-liao-muduozhong-threadpoolde-shi-xian-xian-cheng-chi-threadpoolyong-dao-liao-qian-mian-fen-xi-de-thread-mutexlock-condition-threadpoolke-yi-she-zhi-gong-zuo-xian-cheng-de-shu-liang-bing-xiang-ren-wu-dui-lie-fang-ru-ren-wu-fang-ru-dao-ren-wu-dui-lie-zhong-de-ren-wu-jiang-you-mou-ge-gong-zuo-xian-cheng-zhi-xing.html"> hongjin.cao Summary: 分析了Muduo中ThreadPool的实现。 线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。</a>
+                                    <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
                                     </address>
                                 </footer><!-- /.post-info -->
-                                <div class="entry-content"> <blockquote>
-<p>https://github.com/chenshuo/muduo/blob/master/muduo/base/ThreadPool.h</p>
-<p>https://github.com/chenshuo/muduo/blob/master/muduo/base/ThreadPool.cc</p>
-</blockquote>
-<p>线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。</p>
-<h1>成员变量</h1>
-<div class="highlight"><pre> <span class="nl">private:</span>
-  <span class="n">mutable</span> <span class="n">MutexLock</span> <span class="n">mutex_</span><span class="p">;</span> <span class="c1">// mutable的，表示在const函数中也可以改变它</span>
-  <span class="n">Condition</span> <span class="n">notEmpty_</span><span class="p">;</span> <span class="c1">// 任务队列queue_不为空了，有任务可以执行了，进而唤醒等待的线程</span>
-  <span class="n">Condition</span> <span class="n">notFull_</span><span class="p">;</span>  <span class="c1">// 任务队列queue_不满了，有空间可以使用了，进而唤醒等待的线程</span>
-
-  <span class="n">string</span> <span class="n">name_</span><span class="p">;</span>
-  <span class="n">Task</span> <span class="n">threadInitCallback_</span><span class="p">;</span> <span class="c1">// 线程初始化函数 ...</span></pre></div> </div><!-- /.entry-content -->
+                                <div class="entry-content"> <p>分析了Muduo中ThreadPool的实现。 线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。</p> </div><!-- /.entry-content -->
 
                                 <div class="medium primary btn"><a href="/muduo-threadpool.html" rel="bookmark" title="Permalink to Muduo : ThreadPool">Read more <i class="icon-arrow-right"></i></a></div>
 
