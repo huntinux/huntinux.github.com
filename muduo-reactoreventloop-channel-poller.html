@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : Reactor(EventLoop, Channel, Poller)</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-reactoreventloop-channel-poller.html" rel="bookmark"
+                   title="Permalink to Muduo : Reactor(EventLoop, Channel, Poller)">Muduo : Reactor(EventLoop, Channel, Poller)</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-08-10T11:00:00+08:00">
+                Wed 10 August 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <blockquote>
+<p>Linux多线程服务器编程 6.4.1</p>
+<p>TCP网络编程最本质的是处理<code>三个半事件</code>:</p>
+<ol>
+<li>
+<p>连接的建立, 包括server accept新连接,客户端成功connect.TCP连接一旦建立,server和client的地位是相等的,可以各自收发数据.</p>
+</li>
+<li>
+<p>连接的断开,包括主动断开(close,shutdown)和被动断开(read返回0)</p>
+</li>
+<li>
+<p>消息到达,文件描述符可读.(对该事件的处理方式决定了网络编程的风格,阻塞还是非阻塞?如何处理分包?应用层缓冲如何设计?)</p>
+</li>
+</ol>
+<p>3.5  消息发送完毕,这算半个,这里的发送完毕是指将数据写入操作系统的缓冲区,将由TCP协议栈负责数据的发送和重传,不代表对方已经接收到数据.</p>
+</blockquote>
+<p>接下来就来学习下muduo是如何处理这<code>三个半事件的</code></p>
+<h1>Reactor Pattern</h1>
+<p><code>《Linux高性能服务器编程》</code>的8.4小节中介绍了Reactor和Proactor,Reactor是向工作线程通知<code>事件的发生</code>,而Proactor则是通知<code>事件的完成</code>.</p>
+<p>TODO: 总结<a href="https://en.wikipedia.org/wiki/Reactor_pattern">Reactor</a></p>
+<p>muduo也是基于Reactor模型的.</p>
+<h1>muduo 的Reactor</h1>
+<p><img alt="这里写图片描述" src="https://lh3.googleusercontent.com/LS86ZKntcADnDQdezB-26s0kBTn34LgFWwgsaP77BEKZwUBLqOoAZT6yRrjFcBsrMR9hjV-N8nhZ7qvWYNI3zJ3Ofe9yGIGdz8kwDkGBjCc3RCdNh_QqAICu0b7qETT7sgGzOqRLaPci7H1SAT7jsJVhdXsASJoqayHjAk5_lK2ZBQQt31rfZpUms7J5DcODEIwvg7teog10colnwKkT0vRSTtJD54pXimYvbi0fB0qrElyTepiz90Ox9o6esof4eIn1hHvOqtQMX4l84tL5EhH-vN3fmmHl5GhD1wdKAKVlPmDnJblPe6JtDE9fGFHTzDWKhKtllzpAjlsMIi2hVlpNyfXfUcH3S-94bG5SPoNBvNigv9sQVD7xaCOlxPZ2UeNvv-gXiGmGgadmixo0kZdcTYmtlFDcbEJC-1DHQx4v_yTHU5IzRP44JNyMfqRK5_0-q5Oe2H2J7WIhvawtm1K3EWFmnQNUErtU6L7ULQXTiCB-AcomI6h5RfeqsqSxAPaoqGoAJO8jhrxrf7-asqBfHJYtR40dpmnW8vSCOkaNxBCVrlUvqtNF0KM84oPt73g1BkMnCgzK69ATR63KgNhDbAFtzQ=w944-h576-no" /></p>
+<h1>EventLoop</h1>
+<p>为了保证每个线程只有一个EventLoop，EventLoop会记录创建它的线程ID，并且使用<code>__thread</code>（TLS线程局部存储）来记录当前线程创建的EventLoop对象的指针。当某线程创建了超过一个EventLoop时,就结束程序。这样就能保证一个线程只有一个EventLoop,即<code>one loop per thread</code></p>
+<p>EventLoop会进行事件循环，使用某种IO Multiplexing技术（select、poll、epoll）监听关心的文件描述符fds是否发生了关注的事件，然后调用相应的handler。因此线程会阻塞在此，当然也可以设置超时时间。 为了能及时唤醒该线程，可以让EventLoop自身也有一个fd，关注它的readable事件，想将EventLoop所在线程唤醒时，只需要向该fd进行写操作即可。</p>
+<p>EventLoop的生命周期与所在线程相同，不必是heap上的。此外，将拥有EventLoop的线程称为<code>IO线程</code>，应为该线程只关心socket fd上的IO。其他线程可以称为‘工作线程’，负责业务逻辑。</p>
+<p><code>activeChannels_</code>用来存放发生了事件的Channel的集合，通过poller来获得（poller负责设置Channel发生了什么事件）。然后调用每个Channel的<code>handleEvent</code>来处理发生的事件，<code>handleEvent</code>根据poller设置的发生事件，调用想用的处理函数。</p>
+<p>最主要的事件循环就是这样的：</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">EventLoop</span><span class="o">::</span><span class="n">loop</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="c1">// ...</span>
+  <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">quit_</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">activeChannels_</span><span class="p">.</span><span class="n">clear</span><span class="p">();</span>
+    <span class="c1">// 通过poller获取就绪的channel，放到activeChannels_中，poller会将发生的事件类型填写到channel的revents_中，供Channel::handleEvent使用</span>
+    <span class="n">pollReturnTime_</span> <span class="o">=</span> <span class="n">poller_</span><span class="o">-&gt;</span><span class="n">poll</span><span class="p">(</span><span class="n">kPollTimeMs</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">activeChannels_</span><span class="p">);</span>
+    <span class="o">++</span><span class="n">iteration_</span><span class="p">;</span>
+
+    <span class="n">eventHandling_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">ChannelList</span><span class="o">::</span><span class="n">iterator</span> <span class="n">it</span> <span class="o">=</span> <span class="n">activeChannels_</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+        <span class="n">it</span> <span class="o">!=</span> <span class="n">activeChannels_</span><span class="p">.</span><span class="n">end</span><span class="p">();</span> <span class="o">++</span><span class="n">it</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">currentActiveChannel_</span> <span class="o">=</span> <span class="o">*</span><span class="n">it</span><span class="p">;</span>
+      <span class="c1">// 调用channel的事件处理函数handleEvent，根据poller设置的发生的事件类型，调用相应的用户回调函数</span>
+      <span class="n">currentActiveChannel_</span><span class="o">-&gt;</span><span class="n">handleEvent</span><span class="p">(</span><span class="n">pollReturnTime_</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="n">currentActiveChannel_</span> <span class="o">=</span> <span class="nb">NULL</span><span class="p">;</span>
+    <span class="n">eventHandling_</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+    <span class="c1">// ...</span>
+  <span class="p">}</span>
+<span class="c1">//...</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>Channel</h1>
+<p>每个Channel只负责一个文件描述符fd的IO事件分发，但它不拥有这个fd，也不在析构时关闭该fd。Channel会把不同的IO事件分发给不同的回调函数，如ReadCallback、WriteCallback。</p>
+<p>每个Channel自始至终只属于一个EventLoop，所以每个Channel只属于一个<code>IO线程</code></p>
+<p>Channel处理事件（其中revents_代表事件类型，由poller负责填写）：</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">Channel</span><span class="o">::</span><span class="n">handleEvent</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">eventHandling_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
+  <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="n">reventsToString</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">((</span><span class="n">revents_</span> <span class="o">&amp;</span> <span class="n">POLLHUP</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="o">!</span><span class="p">(</span><span class="n">revents_</span> <span class="o">&amp;</span> <span class="n">POLLIN</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">logHup_</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">LOG_WARN</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;fd = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">fd_</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; Channel::handle_event() POLLHUP&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">closeCallback_</span><span class="p">)</span> <span class="n">closeCallback_</span><span class="p">();</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">revents_</span> <span class="o">&amp;</span> <span class="n">POLLNVAL</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">LOG_WARN</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;fd = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">fd_</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; Channel::handle_event() POLLNVAL&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+
+  <span class="k">if</span> <span class="p">(</span><span class="n">revents_</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLERR</span> <span class="o">|</span> <span class="n">POLLNVAL</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">errorCallback_</span><span class="p">)</span> <span class="n">errorCallback_</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">revents_</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">POLLIN</span> <span class="o">|</span> <span class="n">POLLPRI</span> <span class="o">|</span> <span class="n">POLLRDHUP</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">readCallback_</span><span class="p">)</span> <span class="n">readCallback_</span><span class="p">(</span><span class="n">receiveTime</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">revents_</span> <span class="o">&amp;</span> <span class="n">POLLOUT</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">writeCallback_</span><span class="p">)</span> <span class="n">writeCallback_</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="n">eventHandling_</span> <span class="o">=</span> <span class="nb">false</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>Poller</h1>
+<p>Poller是对IO Multiplexing的封装（可用select、poll、epoll），它属于某个EventLoop，生命周期与EventLoop相同，使用时无需加锁。Poller并不拥有Channel，只是持有Channel的裸指针（<code>map&lt;int,Channel*&gt;</code>,一个fd对应一个channel），因此Channel在析构之前，需要自己unregister，即调用<code>EventLoop::removeChannel---&gt;Poller::removeChannel</code>，将自己从Poller的channels中删除，避免空悬指针。</p>
+<p>EPollPoller继承了Poller，主要的事件轮询poll实现如下，通过<code>epoll_wait</code>获取就绪的channel，放到activeChannels中，供EventLoop使用。</p>
+<div class="highlight"><pre><span class="n">Timestamp</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">poll</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMs</span><span class="p">,</span> <span class="n">ChannelList</span><span class="o">*</span> <span class="n">activeChannels</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;fd total count &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">channels_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="c1">// channels是一个map&lt;fd, Channel*&gt;,保存了fd对应的channel</span>
+
+  <span class="c1">// 查询发生了哪些事件，存放在events_中</span>
+  <span class="kt">int</span> <span class="n">numEvents</span> <span class="o">=</span> <span class="o">::</span><span class="n">epoll_wait</span><span class="p">(</span><span class="n">epollfd_</span><span class="p">,</span>
+                               <span class="o">&amp;*</span><span class="n">events_</span><span class="p">.</span><span class="n">begin</span><span class="p">(),</span>
+                               <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">int</span><span class="o">&gt;</span><span class="p">(</span><span class="n">events_</span><span class="p">.</span><span class="n">size</span><span class="p">()),</span>
+                               <span class="n">timeoutMs</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">numEvents</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">fillActiveChannels</span><span class="p">(</span><span class="n">numEvents</span><span class="p">,</span> <span class="n">activeChannels</span><span class="p">);</span> <span class="c1">// 将就绪的channel放到activeChannels，供EventLoop使用</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">implicit_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">numEvents</span><span class="p">)</span> <span class="o">==</span> <span class="n">events_</span><span class="p">.</span><span class="n">size</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">events_</span><span class="p">.</span><span class="n">resize</span><span class="p">(</span><span class="n">events_</span><span class="p">.</span><span class="n">size</span><span class="p">()</span><span class="o">*</span><span class="mi">2</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">numEvents</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;nothing happended&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="c1">// error happens, log uncommon ones</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">savedErrno</span> <span class="o">!=</span> <span class="n">EINTR</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">errno</span> <span class="o">=</span> <span class="n">savedErrno</span><span class="p">;</span>
+      <span class="n">LOG_SYSERR</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;EPollPoller::poll()&quot;</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+ <span class="c1">//...</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">fillActiveChannels</span><span class="p">(</span><span class="kt">int</span> <span class="n">numEvents</span><span class="p">,</span>
+                                     <span class="n">ChannelList</span><span class="o">*</span> <span class="n">activeChannels</span><span class="p">)</span> <span class="k">const</span>
+<span class="p">{</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">implicit_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">numEvents</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">events_</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+  <span class="k">for</span> <span class="p">(</span><span class="kt">int</span> <span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">numEvents</span><span class="p">;</span> <span class="o">++</span><span class="n">i</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// epoll_event.data.ptr存放的是Channel的指针</span>
+    <span class="n">Channel</span><span class="o">*</span> <span class="n">channel</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">Channel</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">events_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span><span class="p">);</span>
+    <span class="n">channel</span><span class="o">-&gt;</span><span class="n">set_revents</span><span class="p">(</span><span class="n">events_</span><span class="p">[</span><span class="n">i</span><span class="p">].</span><span class="n">events</span><span class="p">);</span> <span class="c1">// 设置发生的事件到Channel::revents_</span>
+    <span class="n">activeChannels</span><span class="o">-&gt;</span><span class="n">push_back</span><span class="p">(</span><span class="n">channel</span><span class="p">);</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>channel注册事件通过<code>Poller::updateChannel</code>实现。其中channel有几个状态<code>kNew、kDeleted、kAdded</code>，分别表示<code>新的、已删除、已被添加到Poller</code>。在updateChannel时会根据Channel的状态执行不同的操作。可以看到底层操作使用的是<code>epoll_ctl</code></p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">updateChannel</span><span class="p">(</span><span class="n">Channel</span><span class="o">*</span> <span class="n">channel</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">const</span> <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">index</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">==</span> <span class="n">kNew</span> <span class="o">||</span> <span class="n">index</span> <span class="o">==</span> <span class="n">kDeleted</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// a new one, add with EPOLL_CTL_ADD</span>
+    <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">();</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">==</span> <span class="n">kNew</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">assert</span><span class="p">(</span><span class="n">channels_</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span> <span class="o">==</span> <span class="n">channels_</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+      <span class="n">channels_</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">=</span> <span class="n">channel</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="c1">// index == kDeleted</span>
+    <span class="p">{</span>
+      <span class="n">assert</span><span class="p">(</span><span class="n">channels_</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span> <span class="o">!=</span> <span class="n">channels_</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+      <span class="n">assert</span><span class="p">(</span><span class="n">channels_</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">==</span> <span class="n">channel</span><span class="p">);</span>
+    <span class="p">}</span>
+
+    <span class="n">channel</span><span class="o">-&gt;</span><span class="n">set_index</span><span class="p">(</span><span class="n">kAdded</span><span class="p">);</span>
+    <span class="n">update</span><span class="p">(</span><span class="n">EPOLL_CTL_ADD</span><span class="p">,</span> <span class="n">channel</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="c1">// update existing one with EPOLL_CTL_MOD/DEL</span>
+    <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">();</span>
+    <span class="p">(</span><span class="kt">void</span><span class="p">)</span><span class="n">fd</span><span class="p">;</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">channels_</span><span class="p">.</span><span class="n">find</span><span class="p">(</span><span class="n">fd</span><span class="p">)</span> <span class="o">!=</span> <span class="n">channels_</span><span class="p">.</span><span class="n">end</span><span class="p">());</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">channels_</span><span class="p">[</span><span class="n">fd</span><span class="p">]</span> <span class="o">==</span> <span class="n">channel</span><span class="p">);</span>
+    <span class="n">assert</span><span class="p">(</span><span class="n">index</span> <span class="o">==</span> <span class="n">kAdded</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">channel</span><span class="o">-&gt;</span><span class="n">isNoneEvent</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">update</span><span class="p">(</span><span class="n">EPOLL_CTL_DEL</span><span class="p">,</span> <span class="n">channel</span><span class="p">);</span>
+      <span class="n">channel</span><span class="o">-&gt;</span><span class="n">set_index</span><span class="p">(</span><span class="n">kDeleted</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">update</span><span class="p">(</span><span class="n">EPOLL_CTL_MOD</span><span class="p">,</span> <span class="n">channel</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">update</span><span class="p">(</span><span class="kt">int</span> <span class="n">operation</span><span class="p">,</span> <span class="n">Channel</span><span class="o">*</span> <span class="n">channel</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">event</span><span class="p">;</span>
+  <span class="n">bzero</span><span class="p">(</span><span class="o">&amp;</span><span class="n">event</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">event</span><span class="p">);</span>
+  <span class="n">event</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">events</span><span class="p">();</span>
+  <span class="n">event</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">channel</span><span class="p">;</span>
+  <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">();</span>
+  <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;epoll_ctl op = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">operationToString</span><span class="p">(</span><span class="n">operation</span><span class="p">)</span>
+    <span class="o">&lt;&lt;</span> <span class="s">&quot; fd = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">fd</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; event = { &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">eventsToString</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; }&quot;</span><span class="p">;</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">::</span><span class="n">epoll_ctl</span><span class="p">(</span><span class="n">epollfd_</span><span class="p">,</span> <span class="n">operation</span><span class="p">,</span> <span class="n">fd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">event</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">operation</span> <span class="o">==</span> <span class="n">EPOLL_CTL_DEL</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">LOG_SYSERR</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;epoll_ctl op =&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">operationToString</span><span class="p">(</span><span class="n">operation</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; fd =&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">fd</span><span class="p">;</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">LOG_SYSFATAL</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;epoll_ctl op =&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">operationToString</span><span class="p">(</span><span class="n">operation</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; fd =&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">fd</span><span class="p">;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h1>Example</h1>
+<p>这是书上的使用示例，展示了EventLoop、Channel、Poller的使用方法：</p>
+<div class="highlight"><pre><span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">g_loop</span><span class="p">;</span>
+
+<span class="kt">void</span> <span class="nf">timeout</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Timeout!&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+    <span class="n">g_loop</span><span class="o">-&gt;</span><span class="n">quit</span><span class="p">();</span>
+<span class="p">}</span>
+
+<span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
+<span class="p">{</span>
+    <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">EventLoop</span> <span class="n">loop</span><span class="p">;</span>
+    <span class="n">g_loop</span> <span class="o">=</span> <span class="o">&amp;</span><span class="n">loop</span><span class="p">;</span>
+
+    <span class="kt">int</span> <span class="n">timerfd</span> <span class="o">=</span> <span class="o">::</span><span class="n">timerfd_create</span><span class="p">(</span><span class="n">CLOCK_MONOTONIC</span><span class="p">,</span> <span class="n">TFD_NONBLOCK</span> <span class="o">|</span> <span class="n">TFD_CLOEXEC</span><span class="p">);</span>
+    <span class="k">if</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span> <span class="o">==</span> <span class="n">timerfd</span><span class="p">)</span> <span class="p">{</span>
+        <span class="n">std</span><span class="o">::</span><span class="n">cerr</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;timerfd_create faile&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="c1">// 创建一个Channel</span>
+    <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">Channel</span> <span class="n">channel</span><span class="p">(</span><span class="o">&amp;</span><span class="n">loop</span><span class="p">,</span> <span class="n">timerfd</span><span class="p">);</span>
+    <span class="c1">// 设置读回调函数</span>
+    <span class="n">channel</span><span class="p">.</span><span class="n">setReadCallback</span><span class="p">(</span><span class="n">timeout</span><span class="p">);</span>
+    <span class="c1">// 注册读事件</span>
+    <span class="n">channel</span><span class="p">.</span><span class="n">enableReading</span><span class="p">();</span>
+
+    <span class="k">struct</span> <span class="n">itimerspec</span> <span class="n">howlong</span><span class="p">;</span>
+    <span class="n">howlong</span><span class="p">.</span><span class="n">it_value</span><span class="p">.</span><span class="n">tv_sec</span> <span class="o">=</span> <span class="mi">2</span><span class="p">;</span>
+    <span class="o">::</span><span class="n">timerfd_settime</span><span class="p">(</span><span class="n">timerfd</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">howlong</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
+
+    <span class="c1">// 进行事件循环，通过Poller获取就绪的Channel，调用Channel::handleEvent，根据事件类型调用相应的回调函数</span>
+    <span class="n">loop</span><span class="p">.</span><span class="n">loop</span><span class="p">();</span>
+
+    <span class="o">::</span><span class="n">close</span><span class="p">(</span><span class="n">timerfd</span><span class="p">);</span>
+    <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>可以发现muduo中类的设计比较有意思。Poller是EventLoop的成员变量，而Poller会持有EventLoop的指针，通过调用<code>EventLoop::assertInLoopThread</code>来保证某些操作只在所属的IO线程被调用。如Poller::updateChannel和Poller::removeChannel。</p>
+<p>此外，Channel也持有EventLoop的指针，通过该指针间接地使用Poller的updateChannel和remvoeChannel。</p>
+<h1>Source Code</h1>
+<p>从muduo源码中提取的，仅供学习使用</p>
+<blockquote>
+<p>https://github.com/huntinux/muduo-learn/tree/v0.1</p>
+</blockquote>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-reactoreventloop-channel-poller.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
