@@ -1,0 +1,335 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : TcpConnection</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-tcpconnection.html" rel="bookmark"
+                   title="Permalink to Muduo : TcpConnection">Muduo : TcpConnection</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-08-11T15:00:00+08:00">
+                Thu 11 August 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>引言</h1>
+<p>前面学习了TcpServer的实现，TcpServer对每个连接都会新建一个TcpConnection（使用shared_ptr管理）。接下来学习一下TcpConnection的设计细节。</p>
+<h1>连接状态</h1>
+<p>muduo对于一个连接的从生到死进行了状态的定义，类似一个状态机。</p>
+<div class="highlight"><pre><span class="k">enum</span> <span class="n">States</span> <span class="p">{</span> <span class="n">kDisconnected</span><span class="p">,</span> <span class="n">kConnecting</span><span class="p">,</span> <span class="n">kConnected</span><span class="p">,</span> <span class="n">kDisconnecting</span> <span class="p">};</span>
+</pre></div>
+
+
+<p>分别代表：已经断开、初始状态、已连接、正在断开</p>
+<h1>成员变量</h1>
+<div class="highlight"><pre><span class="n">private</span>
+  <span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop_</span><span class="p">;</span> <span class="c1">// 神一样的存在，EventLoop</span>
+  <span class="n">string</span> <span class="n">name_</span><span class="p">;</span>
+  <span class="n">States</span> <span class="n">state_</span><span class="p">;</span>  <span class="c1">// FIXME: use atomic variable</span>
+  <span class="c1">// we don&#39;t expose those classes to client.</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">scoped_ptr</span><span class="o">&lt;</span><span class="n">Socket</span><span class="o">&gt;</span> <span class="n">socket_</span><span class="p">;</span>   <span class="c1">// 已连接套接字</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">scoped_ptr</span><span class="o">&lt;</span><span class="n">Channel</span><span class="o">&gt;</span> <span class="n">channel_</span><span class="p">;</span> <span class="c1">// 已连接套接字对应的Channel</span>
+  <span class="n">InetAddress</span> <span class="n">localAddr_</span><span class="p">;</span>
+  <span class="n">InetAddress</span> <span class="n">peerAddr_</span><span class="p">;</span>
+  <span class="n">ConnectionCallback</span> <span class="n">connectionCallback_</span><span class="p">;</span>
+  <span class="n">MessageCallback</span> <span class="n">messageCallback_</span><span class="p">;</span>
+  <span class="n">WriteCompleteCallback</span> <span class="n">writeCompleteCallback_</span><span class="p">;</span>
+  <span class="n">ConnectionCallback</span> <span class="n">closeCallback_</span><span class="p">;</span>
+  <span class="n">Buffer</span> <span class="n">inputBuffer_</span><span class="p">;</span>  <span class="c1">// 输入缓冲区</span>
+  <span class="c1">// MutexLock mutex_;</span>
+  <span class="n">Buffer</span> <span class="n">outputBuffer_</span><span class="p">;</span> <span class="c1">// 输出缓冲区</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">any</span> <span class="n">context_</span><span class="p">;</span>  <span class="c1">// 存放上下文</span>
+</pre></div>
+
+
+<p>先理解上面的 <code>loop_</code>, <code>socket_</code>, <code>channel_</code>好了，不明白请翻阅前几篇文章。</p>
+<h1>构造/析构函数</h1>
+<div class="highlight"><pre><span class="n">TcpConnection</span><span class="o">::</span><span class="n">TcpConnection</span><span class="p">(</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop</span><span class="p">,</span>
+                             <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name__</span><span class="p">,</span>
+                             <span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span>
+                             <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span> <span class="n">localAddr</span><span class="p">,</span>
+                             <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span> <span class="n">peerAddr</span><span class="p">)</span>
+  <span class="o">:</span> <span class="n">loop_</span><span class="p">(</span><span class="n">CHECK_NOTNULL</span><span class="p">(</span><span class="n">loop</span><span class="p">)),</span>
+    <span class="n">name_</span><span class="p">(</span><span class="n">name__</span><span class="p">),</span>
+    <span class="n">state_</span><span class="p">(</span><span class="n">kConnecting</span><span class="p">),</span>          <span class="c1">// 初始状态为kConnecting</span>
+    <span class="n">socket_</span><span class="p">(</span><span class="n">new</span> <span class="n">Socket</span><span class="p">(</span><span class="n">sockfd</span><span class="p">)),</span>  <span class="c1">// RAII管理已连接套接字</span>
+    <span class="n">channel_</span><span class="p">(</span><span class="n">new</span> <span class="n">Channel</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">sockfd</span><span class="p">)),</span> <span class="c1">// 使用Channel管理套接字上的读写</span>
+    <span class="n">localAddr_</span><span class="p">(</span><span class="n">localAddr</span><span class="p">),</span>
+    <span class="n">peerAddr_</span><span class="p">(</span><span class="n">peerAddr</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// 设置一些回调函数（好的，这很muduo）</span>
+  <span class="c1">// 在已连接套接字可读时，调用TcpConnection::handleRead，进而调用用户设置的回调函数messageCallback_</span>
+  <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">setReadCallback</span><span class="p">(</span>
+      <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleRead</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">_1</span><span class="p">));</span>
+  <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">setWriteCallback</span><span class="p">(</span>
+      <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleWrite</span><span class="p">,</span> <span class="n">this</span><span class="p">));</span>
+  <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">setCloseCallback</span><span class="p">(</span>
+      <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleClose</span><span class="p">,</span> <span class="n">this</span><span class="p">));</span>
+  <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">setErrorCallback</span><span class="p">(</span>
+      <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleError</span><span class="p">,</span> <span class="n">this</span><span class="p">));</span>
+  <span class="n">LOG_DEBUG</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;TcpConnection::ctor[&quot;</span> <span class="o">&lt;&lt;</span>  <span class="n">name_</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;] at &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">this</span>
+    <span class="o">&lt;&lt;</span> <span class="s">&quot; fd=&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">sockfd</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="n">TcpConnection</span><span class="o">::~</span><span class="n">TcpConnection</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">LOG_DEBUG</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;TcpConnection::dtor[&quot;</span> <span class="o">&lt;&lt;</span>  <span class="n">name_</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;] at &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">this</span>
+    <span class="o">&lt;&lt;</span> <span class="s">&quot; fd=&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">();</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>构造函数在初始化列表中对socket、channel等进行了初始化，在函数体中设置了回调函数。</p>
+<h1>TcpConnection::handleRead</h1>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleRead</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="kt">int</span> <span class="n">savedErrno</span><span class="p">;</span>
+  <span class="kt">ssize_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">inputBuffer_</span><span class="p">.</span><span class="n">readFd</span><span class="p">(</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">savedErrno</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// 调用回调函数，使用shared_from_this()得到自身的shared_ptr, 延长了该对象的生命期，保证了它的生命期长过messageCallback_函数，messageCallback_能安全的使用它。</span>
+    <span class="n">messageCallback_</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">inputBuffer_</span><span class="p">,</span> <span class="n">receiveTime</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">handleClose</span><span class="p">();</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="c1">// check savedErrno</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>前面提到了，在已连接套接字可读时，调用<code>TcpConnection::handleRead</code>，进而调用用户设置的回调函数<code>messageCallback_</code></p>
+<h1>连接的断开</h1>
+<p>这是muduo提到的<code>三个半事件</code>中的另一个事件，即处理连接的断开。这个过程比较绕，是这样事儿的，图中的<code>X</code>表示TcpConnection通常在此析构:</p>
+<p><img alt="这里写图片描述" src="https://lh3.googleusercontent.com/hpgbPt4QAAJ0RrfDgCfSvjUbOrJkMjLy_uy0-AALrlZAJ5Vyh_IlEhrPafS-7KHT7zyGdgTTadiw3rzICvJRqiAcLs9rlQd20D9gsETRaaO6RaHyxulErmpRmvBxUgx58GJdo4XHlYxjVv0MvjmElV6yYJSBHFVKEJesM54fd1gLaJgJ-OtdPwDD3cFf6gO8UTfWUR1UavniqHPzCU454o7YR6wnHQMXtVHmZzTXjF_VKKyQa3dV1d3sMouZ86WzI1ku13m1QbbzBuVWAEJjZ8bQU4ebDhMT08yoAL4uIWbKzGatRrFPaX9hNWrSh8jjmG5geeogs_yjOA6sELYpwqGXDiA7m0ew9E0ZkjzqVz0Ke_e14HRME88QpTYa1ZrnTIQXwyasr5Mkss3uABAVwOA0kG3_wlLxc7EeaplEDAOBXbJLuFvDqA1CDcnFOn7ZfEGNnz0w60bJneiwTT-Y0NRTwPVF0ASdZ7-S_JV4AydlK-ULQpl-cRoMd3wcnnNDi790Am_GYxzW-fwmlxjzTeXGCcMKKnFSiC8BbzjJKL1MYtSzD9MYfVqkeE8iuXrpD8A9gG5yUeuYn77OpLtwCi9W_7hflg=w806-h509-no" /></p>
+<p>为什么看上去这么绕？</p>
+<p>主要原因是TcpConnection是在TcpServer中创建的，但是连接断开事件是被TcpConnection得知的。TcpConnection需要将TcpServer中存放自己shared_ptr的容器中的对应响删除掉，然后才能析构。为了在TcpServer进行erase时不会将TcpConnection析构，需要使用一定的手段（<code>shared_from_this</code>）</p>
+<p>此外，TcpConnection的Channel的裸指针暴露给了EventLoop的Poller。根据上图的调用链，不能在使用Channel时将TcpConnection析构，因为TcpConnection析构时，Channel也会被析构，这就造成正在使用一个对象时，它确被析构了，将导致严重的问题。所以muduo使用<code>queueInLoop</code>使得TcpConnection的析构点位于使用完channel之后的位置（见EventLoop::loop）。</p>
+<p>下面会进行详细分析。</p>
+<h2>TcpConnection::handleClose</h2>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleClose</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="c1">// we don&#39;t close fd, leave it to dtor, so we can find leaks easily.</span>
+  <span class="n">setState</span><span class="p">(</span><span class="n">kDisconnected</span><span class="p">);</span> <span class="c1">// 设置状态为kDisconnected，表示已断开</span>
+  <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">disableAll</span><span class="p">();</span>  <span class="c1">// 移除注册的事件，使用epoll时是EPOLL_CTL_DEL</span>
+
+  <span class="n">TcpConnectionPtr</span> <span class="n">guardThis</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span> <span class="c1">// 延长本对象的生命周期，引用计数为2</span>
+
+  <span class="c1">// 调用用户回调函数</span>
+  <span class="n">connectionCallback_</span><span class="p">(</span><span class="n">guardThis</span><span class="p">);</span> <span class="c1">// 参数为shared_ptr,保证了 connectionCallback_能安全的使用本对象</span>
+
+  <span class="c1">// 调用TcpServer::removeConnection</span>
+  <span class="c1">// must be the last line</span>
+  <span class="n">closeCallback_</span><span class="p">(</span><span class="n">guardThis</span><span class="p">);</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>连接断开时，会调用<code>TcpConnection::handleClose</code>；接着调用用户回调<code>connectionCallback_</code>；最后调用<code>closeCallback_</code>，即<code>TcpServer::removeConnection</code>(TcpServer创建TcpConnection时设置的)</p>
+<h2>TcpServer::removeConnection</h2>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpServer</span><span class="o">::</span><span class="n">removeConnection</span><span class="p">(</span><span class="k">const</span> <span class="n">TcpConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">runInLoop</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpServer</span><span class="o">::</span><span class="n">removeConnectionInLoop</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">conn</span><span class="p">));</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">TcpServer</span><span class="o">::</span><span class="n">removeConnectionInLoop</span><span class="p">(</span><span class="k">const</span> <span class="n">TcpConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="n">LOG_INFO</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;TcpServer::removeConnectionInLoop [&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">name_</span>
+           <span class="o">&lt;&lt;</span> <span class="s">&quot;] - connection &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">conn</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">();</span>
+
+  <span class="c1">// 根据conn的name，从map容器中删除，此时引用计数会减1。erase之前引用计数为2（由前面的shared_from_this()保证），所以执行完erase，引用计数变为1</span>
+  <span class="kt">size_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">connections_</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="n">conn</span><span class="o">-&gt;</span><span class="n">name</span><span class="p">());</span>
+  <span class="n">assert</span><span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="mi">1</span><span class="p">);</span>
+
+  <span class="c1">// 然后调用conn-&gt;connectDestroyed</span>
+  <span class="n">EventLoop</span><span class="o">*</span> <span class="n">ioLoop</span> <span class="o">=</span> <span class="n">conn</span><span class="o">-&gt;</span><span class="n">getLoop</span><span class="p">();</span>
+  <span class="n">ioLoop</span><span class="o">-&gt;</span><span class="n">queueInLoop</span><span class="p">(</span>
+      <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">connectDestroyed</span><span class="p">,</span> <span class="n">conn</span><span class="p">));</span> <span class="c1">// bind延长了conn的生命期，connectDestroyed完成后，TcpConnection被析构。</span>
+  <span class="c1">// FIXME wake up ?</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>TcpServer先将该conn从map容器中删除，因为erase之前使用了<code>shared_from_this</code>,所以erase之前引用计数为2，那么erase之后引用计数将变为1。
+如果没用<code>shared_from_this</code>，仅仅传递了一个裸指针过来，erase之后引用计数变为0，那么该TcpConnection会被析构！这意味着TcpConnection的Channel也会被析构，可是你现在正在使用该Channel啊（结合上图看），怎么能在使用某个对象的时候把它析构呢，这是严重的错误。所以muduo使用shared_ptr管理TcpConnection，避免了上述问题。</p>
+<p>最后<code>queueInLoop</code>就是将<code>TcpConnection::connectDestroyed</code>函数移动到EventLoop中执行，执行位置就是在<code>Channel-&gt;handleEvent</code>之后，此时可以安全的析构TcpConnection。（这么做的原因见前面）</p>
+<p>注意上面最后的boost::bind,它让TcpConnection的生命期长到调用connectDestroyed的时刻。在<code>connectDestroyed</code>执行完之后，TcpConnection才被析构。</p>
+<h2>TcpConnection::connectDestroyed</h2>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">connectDestroyed</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">state_</span> <span class="o">==</span> <span class="n">kConnected</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">setState</span><span class="p">(</span><span class="n">kDisconnected</span><span class="p">);</span>
+    <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">disableAll</span><span class="p">();</span>
+
+    <span class="n">connectionCallback_</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span>
+  <span class="p">}</span>
+
+  <span class="c1">// 将EventLoop.Poller中的该channel从容器中删除</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">removeChannel</span><span class="p">(</span><span class="n">get_pointer</span><span class="p">(</span><span class="n">channel_</span><span class="p">));</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p><code>TcpConnection::connectDestroyed</code>是该对象析构前调用的最后一个成员函数，它会通知用户连接已经断开。</p>
+<p>我已经用了洪荒之力来理解TcpConnection，实在是太绕了。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-tcpconnection.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
