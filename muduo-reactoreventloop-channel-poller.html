@@ -255,7 +255,7 @@
   <span class="k">struct</span> <span class="n">epoll_event</span> <span class="n">event</span><span class="p">;</span>
   <span class="n">bzero</span><span class="p">(</span><span class="o">&amp;</span><span class="n">event</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">event</span><span class="p">);</span>
   <span class="n">event</span><span class="p">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">events</span><span class="p">();</span>
-  <span class="n">event</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">channel</span><span class="p">;</span>
+  <span class="n">event</span><span class="p">.</span><span class="n">data</span><span class="p">.</span><span class="n">ptr</span> <span class="o">=</span> <span class="n">channel</span><span class="p">;</span> <span class="c1">// 保存Channel的指针</span>
   <span class="kt">int</span> <span class="n">fd</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">();</span>
   <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;epoll_ctl op = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">operationToString</span><span class="p">(</span><span class="n">operation</span><span class="p">)</span>
     <span class="o">&lt;&lt;</span> <span class="s">&quot; fd = &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">fd</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; event = { &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">eventsToString</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; }&quot;</span><span class="p">;</span>
@@ -274,6 +274,7 @@
 </pre></div>
 
 
+<p>可以看到<code>epoll_event.data.ptr</code>存放的是Channel的指针，这样在相应的fd变得active时，可以从<code>epoll_event.data.ptr</code>找到对应的Channel。可以看到指针的重要性，它连接了“两个世界”。</p>
 <h1>Example</h1>
 <p>这是书上的使用示例，展示了EventLoop、Channel、Poller的使用方法：</p>
 <div class="highlight"><pre><span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">g_loop</span><span class="p">;</span>

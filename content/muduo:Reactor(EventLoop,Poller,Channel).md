@@ -214,7 +214,7 @@ void EPollPoller::update(int operation, Channel* channel)
   struct epoll_event event;
   bzero(&event, sizeof event);
   event.events = channel->events();
-  event.data.ptr = channel;
+  event.data.ptr = channel; // 保存Channel的指针
   int fd = channel->fd();
   LOG_TRACE << "epoll_ctl op = " << operationToString(operation)
     << " fd = " << fd << " event = { " << channel->eventsToString() << " }";
@@ -232,7 +232,7 @@ void EPollPoller::update(int operation, Channel* channel)
 }
 
 ```
-
+ 可以看到`epoll_event.data.ptr`存放的是Channel的指针，这样在相应的fd变得active时，可以从`epoll_event.data.ptr`找到对应的Channel。可以看到指针的重要性，它连接了“两个世界”。
 # Example
 
 这是书上的使用示例，展示了EventLoop、Channel、Poller的使用方法：
