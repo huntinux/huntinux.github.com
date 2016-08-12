@@ -138,3 +138,12 @@ void TcpConnection::handleWrite()
 经过muduo的封装，用户需要发送数据时直接把数据交给send就可以了，send没有返回值，muduo在底层会将数据发送完毕，最后调用用户设置好的回调，看来很方便。
 
 可以想一想在发送数据时，client断开连接的情况，handleWrite发现后没有做过多处理(see the last else)，因为handleRead会在read返回0时发现这一点，然后断开连接。
+
+
+## HighWaterMarkCallback
+
+上面提到的`WriteCompleteCallback`可以称为`低水位回调`，那么`HighWaterMarkCallback`即`高水位回调`。
+
+想想一下一个proxy，C和S通过该proxy连接，S的发送数据速度很快，C的读取数据的速度很慢，那么proxy的outputBuffer会暴涨。为了协调一下收发的速度，可以使用`高水位回调`。
+
+当TcpConnection::outputBuffer的大小到达某个值时（hightWaterMark），HighWaterMarkCallback函数被调用。在该函数中可以先停止对读事件的关注，在outputBuffer发送完毕（即WirteCompleteCallback被调用时）再开启对读事件的关注。
