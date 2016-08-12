@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : TcpConnection's Read Buffer</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-tcpconnections-read-buffer.html" rel="bookmark"
+                   title="Permalink to Muduo : TcpConnection's Read Buffer">Muduo : TcpConnection's Read Buffer</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-08-12T15:00:00+08:00">
+                Fri 12 August 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>引言</h1>
+<p>这篇文章分析一下TcpConnection对输入的处理，异步非阻塞网络库是需要输入/输入缓冲区的，这点muduo的作者陈硕在书中7.4.2节已经说的很清楚了。对于输入的处理是<code>三个半事件</code>中的又一个重要事件。</p>
+<h1>TcpConnection::handleRead</h1>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleRead</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="kt">int</span> <span class="n">savedErrno</span><span class="p">;</span>
+  <span class="kt">ssize_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">inputBuffer_</span><span class="p">.</span><span class="n">readFd</span><span class="p">(</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">savedErrno</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">// 读到数据，调用用户回调</span>
+  <span class="p">{</span>
+    <span class="n">messageCallback_</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">(),</span> <span class="o">&amp;</span><span class="n">inputBuffer_</span><span class="p">,</span> <span class="n">receiveTime</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">handleClose</span><span class="p">();</span> <span class="c1">// read返回0，断开连接</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="c1">// check savedErrno</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>当某socketfd可读时<code>TcpConnection::handleRead</code>被调用，Timestamp是Poller返回的时间。如果读到了数据（n&gt;0）,就调用用户设置的回调函数。</p>
+<p>muduo采用Level Trigger，而不是Edge Trigger。原因作者提到了三点
+1. 在文件描述符较少而且活动文件描述符较多时，ET模式不一定比LT高效；
+2. LT编程更容易 
+3.  读写操作时不必使用循环等候出现<code>EAGAIN</code>，这样可以节省系统调用次数，降低延迟。</p>
+<p>此外，作者也提到了理想的方式是读操作使用LT、写操作使用ET，但是目前linux不支持。&gt;_&lt;</p>
+<p>muduo设计的读操作在有数据时就会调用用户回调函数，并不能直接设置某些条件，比如在收到固定大小的数据时再调用callback。这属于TCP分包的问题，可以通过引入一个间阶层codec来解决。后面会总结。</p>
+<h1>Buffer::readFd</h1>
+<div class="highlight"><pre><span class="kt">ssize_t</span> <span class="n">Buffer</span><span class="o">::</span><span class="n">readFd</span><span class="p">(</span><span class="kt">int</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">int</span><span class="o">*</span> <span class="n">savedErrno</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="c1">// FIXME use ioctl/FIONREAD to tell how much to read</span>
+  <span class="kt">char</span> <span class="n">extrabuf</span><span class="p">[</span><span class="mi">65536</span><span class="p">];</span>
+  <span class="k">struct</span> <span class="n">iovec</span> <span class="n">vec</span><span class="p">[</span><span class="mi">2</span><span class="p">];</span>
+  <span class="kt">size_t</span> <span class="n">writable</span> <span class="o">=</span> <span class="n">writableBytes</span><span class="p">();</span>
+  <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">begin</span><span class="p">()</span><span class="o">+</span><span class="n">writerIndex_</span><span class="p">;</span>
+  <span class="n">vec</span><span class="p">[</span><span class="mi">0</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="n">writable</span><span class="p">;</span>
+  <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_base</span> <span class="o">=</span> <span class="n">extrabuf</span><span class="p">;</span>
+  <span class="n">vec</span><span class="p">[</span><span class="mi">1</span><span class="p">].</span><span class="n">iov_len</span> <span class="o">=</span> <span class="k">sizeof</span> <span class="n">extrabuf</span><span class="p">;</span>
+  <span class="kt">ssize_t</span> <span class="n">n</span> <span class="o">=</span> <span class="n">readv</span><span class="p">(</span><span class="n">fd</span><span class="p">,</span> <span class="n">vec</span><span class="p">,</span> <span class="mi">2</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="o">*</span><span class="n">savedErrno</span> <span class="o">=</span> <span class="n">errno</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">implicit_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">n</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">writable</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">writerIndex_</span> <span class="o">+=</span> <span class="n">n</span><span class="p">;</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span> <span class="c1">// 使用了栈上空间，则将它append到buffer后面</span>
+    <span class="n">writerIndex_</span> <span class="o">=</span> <span class="n">buffer_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span>
+    <span class="n">append</span><span class="p">(</span><span class="n">extrabuf</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">writable</span><span class="p">);</span>
+  <span class="p">}</span>
+  <span class="k">return</span> <span class="n">n</span><span class="p">;</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>前面handleRead里面的<code>inputBuffer_.readFd</code>函数也是经过精心设计的。利用了<code>栈上空间</code> + <code>readv</code>实现。这使得输入缓冲区足够大，一次readv就能取完全部数据。这样节省了一个<code>ioctl(sockfd, FIONREAD, &amp;length)</code>系统调用（该系统调用用来得知有多少数据可读，然后根据length在buffer中预留出足够的空间）。</p>
+<h1>处理分包</h1>
+<p>muduo的handleRead只有读到数据就调用用户回调，那么如何实现类似“收到16字节时再调用callback”这样的需求呢？</p>
+<p>答案是引入一个间阶层codec。比如我们想在收到16字节数据时再调用我们设置的callback。</p>
+<p>可以将回调设置为codec::FixedLengthCodec函数，然后在codec::FixLengthCodec里面做判断，当读到16字节时，在调用我们的回调函数。（呵呵，有点绕）</p>
+<p>例如muduo的chat server：</p>
+<div class="highlight"><pre><span class="n">class</span> <span class="n">ChatServer</span> <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
+<span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="n">ChatServer</span><span class="p">(</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop</span><span class="p">,</span>
+             <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span> <span class="n">listenAddr</span><span class="p">)</span>
+  <span class="o">:</span> <span class="n">loop_</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span>
+    <span class="n">server_</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">listenAddr</span><span class="p">,</span> <span class="s">&quot;ChatServer&quot;</span><span class="p">),</span>
+    <span class="c1">// 设置读到足够数据时的回调为`ChatServer::onStringMessage`</span>
+    <span class="n">codec_</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ChatServer</span><span class="o">::</span><span class="n">onStringMessage</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">_1</span><span class="p">,</span> <span class="n">_2</span><span class="p">,</span> <span class="n">_3</span><span class="p">))</span>
+  <span class="p">{</span>
+    <span class="n">server_</span><span class="p">.</span><span class="n">setConnectionCallback</span><span class="p">(</span>
+        <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ChatServer</span><span class="o">::</span><span class="n">onConnection</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">_1</span><span class="p">));</span>
+
+    <span class="c1">// 将数据到达的回调设置为codec::onMessage</span>
+    <span class="n">server_</span><span class="p">.</span><span class="n">setMessageCallback</span><span class="p">(</span>
+        <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">LengthHeaderCodec</span><span class="o">::</span><span class="n">onMessage</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">codec_</span><span class="p">,</span> <span class="n">_1</span><span class="p">,</span> <span class="n">_2</span><span class="p">,</span> <span class="n">_3</span><span class="p">));</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">start</span><span class="p">()</span>
+  <span class="p">{</span>
+    <span class="n">server_</span><span class="p">.</span><span class="n">start</span><span class="p">();</span>
+  <span class="p">}</span>
+
+ <span class="nl">private:</span>
+  <span class="kt">void</span> <span class="n">onConnection</span><span class="p">(</span><span class="k">const</span> <span class="n">TcpConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">LOG_INFO</span> <span class="o">&lt;&lt;</span> <span class="n">conn</span><span class="o">-&gt;</span><span class="n">localAddress</span><span class="p">().</span><span class="n">toHostPort</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; -&gt; &quot;</span>
+        <span class="o">&lt;&lt;</span> <span class="n">conn</span><span class="o">-&gt;</span><span class="n">peerAddress</span><span class="p">().</span><span class="n">toHostPort</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="s">&quot; is &quot;</span>
+        <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">conn</span><span class="o">-&gt;</span><span class="n">connected</span><span class="p">()</span> <span class="o">?</span> <span class="s">&quot;UP&quot;</span> <span class="o">:</span> <span class="s">&quot;DOWN&quot;</span><span class="p">);</span>
+
+    <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">conn</span><span class="o">-&gt;</span><span class="n">connected</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">conn</span><span class="o">-&gt;</span><span class="n">setContext</span><span class="p">(</span><span class="n">Timestamp</span><span class="p">());</span>
+      <span class="n">connections_</span><span class="p">.</span><span class="n">insert</span><span class="p">(</span><span class="n">conn</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">connections_</span><span class="p">.</span><span class="n">erase</span><span class="p">(</span><span class="n">conn</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="n">onStringMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">TcpConnectionPtr</span><span class="o">&amp;</span><span class="p">,</span>
+                       <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">,</span>
+                       <span class="n">Timestamp</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
+    <span class="k">for</span> <span class="p">(</span><span class="n">ConnectionList</span><span class="o">::</span><span class="n">iterator</span> <span class="n">it</span> <span class="o">=</span> <span class="n">connections_</span><span class="p">.</span><span class="n">begin</span><span class="p">();</span>
+        <span class="n">it</span> <span class="o">!=</span> <span class="n">connections_</span><span class="p">.</span><span class="n">end</span><span class="p">();</span>
+        <span class="o">++</span><span class="n">it</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">codec_</span><span class="p">.</span><span class="n">send</span><span class="p">(</span><span class="n">get_pointer</span><span class="p">(</span><span class="o">*</span><span class="n">it</span><span class="p">),</span> <span class="n">message</span><span class="p">);</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="k">typedef</span> <span class="n">std</span><span class="o">::</span><span class="n">set</span><span class="o">&lt;</span><span class="n">TcpConnectionPtr</span><span class="o">&gt;</span> <span class="n">ConnectionList</span><span class="p">;</span>
+  <span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop_</span><span class="p">;</span>
+  <span class="n">TcpServer</span> <span class="n">server_</span><span class="p">;</span>
+  <span class="n">LengthHeaderCodec</span> <span class="n">codec_</span><span class="p">;</span>
+  <span class="n">MutexLock</span> <span class="n">mutex_</span><span class="p">;</span>
+  <span class="n">ConnectionList</span> <span class="n">connections_</span><span class="p">;</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>codec的定义：</p>
+<div class="highlight"><pre><span class="n">class</span> <span class="n">LengthHeaderCodec</span> <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
+<span class="p">{</span>
+ <span class="nl">public:</span>
+  <span class="k">typedef</span> <span class="n">boost</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span> <span class="p">(</span><span class="k">const</span> <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">TcpConnectionPtr</span><span class="o">&amp;</span><span class="p">,</span>
+                                <span class="k">const</span> <span class="n">muduo</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">,</span>
+                                <span class="n">muduo</span><span class="o">::</span><span class="n">Timestamp</span><span class="p">)</span><span class="o">&gt;</span> <span class="n">StringMessageCallback</span><span class="p">;</span>
+
+  <span class="n">explicit</span> <span class="nf">LengthHeaderCodec</span><span class="p">(</span><span class="k">const</span> <span class="n">StringMessageCallback</span><span class="o">&amp;</span> <span class="n">cb</span><span class="p">)</span>
+    <span class="o">:</span> <span class="n">messageCallback_</span><span class="p">(</span><span class="n">cb</span><span class="p">)</span>
+  <span class="p">{</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="nf">onMessage</span><span class="p">(</span><span class="k">const</span> <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">TcpConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">,</span>
+                 <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">Buffer</span><span class="o">*</span> <span class="n">buf</span><span class="p">,</span>
+                 <span class="n">muduo</span><span class="o">::</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">muduo</span><span class="o">::</span><span class="n">Timestamp</span><span class="o">&amp;</span> <span class="n">receiveTime_</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">any_cast</span><span class="o">&lt;</span><span class="n">muduo</span><span class="o">::</span><span class="n">Timestamp</span><span class="o">&amp;&gt;</span><span class="p">(</span><span class="n">conn</span><span class="o">-&gt;</span><span class="n">getContext</span><span class="p">());</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">receiveTime_</span><span class="p">.</span><span class="n">valid</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">receiveTime_</span> <span class="o">=</span> <span class="n">receiveTime</span><span class="p">;</span>
+    <span class="p">}</span>
+
+    <span class="k">if</span> <span class="p">(</span><span class="n">buf</span><span class="o">-&gt;</span><span class="n">readableBytes</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">kHeaderLen</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="n">buf</span><span class="o">-&gt;</span><span class="n">peek</span><span class="p">();</span>
+      <span class="kt">int32_t</span> <span class="n">tmp</span> <span class="o">=</span> <span class="o">*</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">int32_t</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">);</span>
+      <span class="kt">int32_t</span> <span class="n">len</span> <span class="o">=</span> <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">sockets</span><span class="o">::</span><span class="n">networkToHost32</span><span class="p">(</span><span class="n">tmp</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">len</span> <span class="o">&gt;</span> <span class="mi">65536</span> <span class="o">||</span> <span class="n">len</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">LOG_ERROR</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Invalid length &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">len</span><span class="p">;</span>
+        <span class="n">conn</span><span class="o">-&gt;</span><span class="n">shutdown</span><span class="p">();</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">buf</span><span class="o">-&gt;</span><span class="n">readableBytes</span><span class="p">()</span> <span class="o">&gt;=</span> <span class="n">len</span> <span class="o">+</span> <span class="n">kHeaderLen</span><span class="p">)</span>
+      <span class="p">{</span> <span class="c1">// 有足够的数据时，才调用回调函数</span>
+        <span class="n">buf</span><span class="o">-&gt;</span><span class="n">retrieve</span><span class="p">(</span><span class="n">kHeaderLen</span><span class="p">);</span>
+        <span class="n">muduo</span><span class="o">::</span><span class="n">string</span> <span class="n">message</span><span class="p">(</span><span class="n">buf</span><span class="o">-&gt;</span><span class="n">peek</span><span class="p">(),</span> <span class="n">len</span><span class="p">);</span>
+        <span class="n">buf</span><span class="o">-&gt;</span><span class="n">retrieve</span><span class="p">(</span><span class="n">len</span><span class="p">);</span>
+        <span class="n">messageCallback_</span><span class="p">(</span><span class="n">conn</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">receiveTime_</span><span class="p">);</span> <span class="c1">// 调用回调函数</span>
+        <span class="n">receiveTime_</span> <span class="o">=</span> <span class="n">muduo</span><span class="o">::</span><span class="n">Timestamp</span><span class="o">::</span><span class="n">invalid</span><span class="p">();</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="kt">void</span> <span class="nf">send</span><span class="p">(</span><span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">TcpConnection</span><span class="o">*</span> <span class="n">conn</span><span class="p">,</span> <span class="k">const</span> <span class="n">muduo</span><span class="o">::</span><span class="n">string</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">Buffer</span> <span class="n">buf</span><span class="p">;</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">data</span><span class="p">(),</span> <span class="n">message</span><span class="p">.</span><span class="n">size</span><span class="p">());</span>
+    <span class="kt">int32_t</span> <span class="n">len</span> <span class="o">=</span> <span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">sockets</span><span class="o">::</span><span class="n">hostToNetwork32</span><span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">int32_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">message</span><span class="p">.</span><span class="n">size</span><span class="p">()));</span>
+    <span class="n">buf</span><span class="p">.</span><span class="n">prepend</span><span class="p">(</span><span class="o">&amp;</span><span class="n">len</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">len</span><span class="p">);</span>
+    <span class="n">conn</span><span class="o">-&gt;</span><span class="n">send</span><span class="p">(</span><span class="o">&amp;</span><span class="n">buf</span><span class="p">);</span>
+  <span class="p">}</span>
+
+ <span class="nl">private:</span>
+  <span class="n">StringMessageCallback</span> <span class="n">messageCallback_</span><span class="p">;</span>
+  <span class="k">const</span> <span class="k">static</span> <span class="kt">size_t</span> <span class="n">kHeaderLen</span> <span class="o">=</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">int32_t</span><span class="p">);</span>
+<span class="p">};</span>
+</pre></div>
+
+
+<p>通过引入codec分包的过程大体上是这样的：</p>
+<p>有数据到达时，将数据放到TcpConnection::inputBuffer中，然后调用callback，这里被设置为codec::onMessage，该函数会判断buffer中的数据是否足够16字节，如果够了才调用ChatServer::onStringMessage。</p>
+<p>虽然感觉有点绕，但是通信双方可以公用一份codec（两端是同一种语言），可以尽可能的避免分包处理出错。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-tcpconnections-read-buffer.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
