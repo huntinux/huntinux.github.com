@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+
+        <title>Muduo : TcpConnection's Write Buffer</title>
+        <meta charset="utf-8" />
+
+
+        <!-- Mobile viewport optimized: j.mp/bplateviewport -->
+        <meta name="viewport" content="width=device-width,initial-scale=1, maximum-scale=1">
+
+        <link rel="stylesheet" type="text/css" href="/theme/gumby.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/style.css" />
+        <link rel="stylesheet" type="text/css" href="/theme/pygment.css" />
+
+        <script src="/theme/js/libs/modernizr-2.6.2.min.js"></script>
+
+
+
+
+</head>
+
+<body id="index" class="home">
+
+
+    <div class="container">
+
+        <div class="row">
+
+          <header id="banner" class="body">
+                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+          </header><!-- /#banner -->
+
+            <div id="navigation" class="navbar row">
+              <a href="#" gumby-trigger="#navigation &gt; ul" class="toggle"><i class="icon-menu"></i></a>
+             
+              <ul class="columns">
+                <li><a href="/">Home</a></li>
+
+
+              </ul>
+            </div>
+
+<section id="content" class="body">
+
+   <div class="row">
+        <div class="eleven columns">
+
+
+            <header>
+              <h2 class="entry-title">
+                <a href="/muduo-tcpconnections-write-buffer.html" rel="bookmark"
+                   title="Permalink to Muduo : TcpConnection's Write Buffer">Muduo : TcpConnection's Write Buffer</a></h2>
+           
+            </header>
+            <footer class="post-info">
+              <abbr class="published" title="2016-08-12T16:00:00+08:00">
+                Fri 12 August 2016
+              </abbr>
+              <address class="vcard author">By 
+                <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
+              </address>
+            </footer><!-- /.post-info -->
+            <div class="entry-content">
+              <h1>引言</h1>
+<p>前面的文章分别分析到了<code>三个半事件</code>中的连接建立、连接断开、数据读入，这里分析最后<code>半个事件</code>，即发送数据。muduo作者将该事件称为是半个事件是有道理的，因为这里的发送是指将数据放到TCP协议栈的发送缓冲区，由TCP协议栈负责将数据发送到对端，因此称为半个事件。</p>
+<h1>发送数据</h1>
+<p>发送数据比接收数据更难，因为发送数据是主动的，接收读取数据是被动的。因为muduo采用的是LT模式，因为合适注册writeable事件需要好好考虑。muduo的send函数的策略是这样的，先判断outputBuffer中是否有数据，如果没有那么尝试直接发送数据，如果一次没有发送完就把剩余的数据放到outputBuffer中，并注册writeable事件，以后在handleWrite中发送剩余数据；如果outputBuffer中有数据就不能尝试先发送了，因为会造成数据乱序。</p>
+<h2>TcpConnection::send</h2>
+<p>send函数有3个重载，大体相同，这里只给出一个。</p>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">send</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">state_</span> <span class="o">==</span> <span class="n">kConnected</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="c1">// 在IO线程执行，保证线程安全</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">loop_</span><span class="o">-&gt;</span><span class="n">isInLoopThread</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">sendInLoop</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">string</span> <span class="n">message</span><span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">len</span><span class="p">);</span>
+      <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">runInLoop</span><span class="p">(</span>
+          <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">sendInLoop</span><span class="p">,</span>
+                      <span class="n">this</span><span class="p">,</span>
+                      <span class="n">message</span><span class="p">));</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">send</span><span class="p">(</span><span class="k">const</span> <span class="n">StringPiece</span><span class="o">&amp;</span> <span class="n">message</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="c1">// FIXME efficiency!!!</span>
+<span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">send</span><span class="p">(</span><span class="n">Buffer</span><span class="o">*</span> <span class="n">buf</span><span class="p">)</span>
+<span class="p">{</span>
+    <span class="c1">// ...</span>
+<span class="p">}</span>
+
+<span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">sendInLoop</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">)</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="kt">ssize_t</span> <span class="n">nwrote</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+
+  <span class="c1">// 如果outputBuffer没有数据，就尝试直接发送</span>
+  <span class="c1">// if no thing in output queue, try writing directly</span>
+  <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">isWriting</span><span class="p">()</span> <span class="o">&amp;&amp;</span> <span class="n">outputBuffer_</span><span class="p">.</span><span class="n">readableBytes</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+  <span class="p">{</span>
+    <span class="n">nwrote</span> <span class="o">=</span> <span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">(),</span> <span class="n">data</span><span class="p">,</span> <span class="n">len</span><span class="p">);</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">nwrote</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">implicit_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">nwrote</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;I am going to write more data&quot;</span><span class="p">;</span>
+      <span class="p">}</span>
+      <span class="k">else</span> <span class="k">if</span> <span class="p">(</span><span class="n">writeCompleteCallback_</span><span class="p">)</span>
+      <span class="p">{</span> <span class="c1">// 一次就发送完了，那么可以调用`writeCompleteCallback`了，很好</span>
+        <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">queueInLoop</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">writeCompleteCallback_</span><span class="p">,</span> <span class="n">shared_from_this</span><span class="p">()));</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">else</span> <span class="c1">// nwrote &lt; 0</span>
+    <span class="p">{</span>
+      <span class="n">nwrote</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">errno</span> <span class="o">!=</span> <span class="n">EWOULDBLOCK</span><span class="p">)</span>
+      <span class="p">{</span>
+        <span class="n">LOG_SYSERR</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;TcpConnection::sendInLoop&quot;</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+
+  <span class="n">assert</span><span class="p">(</span><span class="n">nwrote</span> <span class="o">&gt;=</span> <span class="mi">0</span><span class="p">);</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">implicit_cast</span><span class="o">&lt;</span><span class="kt">size_t</span><span class="o">&gt;</span><span class="p">(</span><span class="n">nwrote</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">len</span><span class="p">)</span>
+  <span class="p">{</span> <span class="c1">// 将剩余的数据添加到outputBuffer</span>
+    <span class="n">outputBuffer_</span><span class="p">.</span><span class="n">append</span><span class="p">(</span><span class="n">static_cast</span><span class="o">&lt;</span><span class="k">const</span> <span class="kt">char</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">+</span><span class="n">nwrote</span><span class="p">,</span> <span class="n">len</span><span class="o">-</span><span class="n">nwrote</span><span class="p">);</span>
+    <span class="c1">// 开始关注writeable事件，剩余的数据在handleWrite中发送</span>
+    <span class="k">if</span> <span class="p">(</span><span class="o">!</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">isWriting</span><span class="p">())</span>
+    <span class="p">{</span>
+      <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">enableWriting</span><span class="p">();</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<h2>TcpConnection::handleWrite</h2>
+<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleWrite</span><span class="p">()</span>
+<span class="p">{</span>
+  <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
+  <span class="k">if</span> <span class="p">(</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">isWriting</span><span class="p">())</span>
+  <span class="p">{</span>
+    <span class="kt">ssize_t</span> <span class="n">n</span> <span class="o">=</span> <span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">fd</span><span class="p">(),</span> <span class="n">outputBuffer_</span><span class="p">.</span><span class="n">peek</span><span class="p">(),</span> <span class="n">outputBuffer_</span><span class="p">.</span><span class="n">readableBytes</span><span class="p">());</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">n</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span>
+    <span class="p">{</span>
+      <span class="n">outputBuffer_</span><span class="p">.</span><span class="n">retrieve</span><span class="p">(</span><span class="n">n</span><span class="p">);</span>
+      <span class="k">if</span> <span class="p">(</span><span class="n">outputBuffer_</span><span class="p">.</span><span class="n">readableBytes</span><span class="p">()</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+      <span class="p">{</span> <span class="c1">// 发送完了，不再关注writeable事件，调用`writeCompleteCallback`</span>
+        <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">disableWriting</span><span class="p">();</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">writeCompleteCallback_</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">queueInLoop</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="n">writeCompleteCallback_</span><span class="p">,</span> <span class="n">shared_from_this</span><span class="p">()));</span>
+        <span class="p">}</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">state_</span> <span class="o">==</span> <span class="n">kDisconnecting</span><span class="p">)</span>
+        <span class="p">{</span>
+          <span class="n">shutdownInLoop</span><span class="p">();</span>
+        <span class="p">}</span>
+      <span class="p">}</span>
+      <span class="k">else</span>
+      <span class="p">{</span> <span class="c1">// 使用的是LT模式，当可写时，handleWrite会被继续调用</span>
+        <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;I am going to write more data&quot;</span><span class="p">;</span>
+      <span class="p">}</span>
+    <span class="p">}</span>
+    <span class="k">else</span>
+    <span class="p">{</span>
+      <span class="n">LOG_SYSERR</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;TcpConnection::handleWrite&quot;</span><span class="p">;</span>
+      <span class="n">abort</span><span class="p">();</span>  <span class="c1">// FIXME</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+  <span class="k">else</span>
+  <span class="p">{</span>
+    <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;Connection is down, no more writing&quot;</span><span class="p">;</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+
+
+<p>经过muduo的封装，用户需要发送数据时直接把数据交给send就可以了，send没有返回值，muduo在底层会将数据发送完毕，最后调用用户设置好的回调，看来很方便。</p>
+<p>可以想一想在发送数据时，client断开连接的情况，handleWrite发现后没有做过多处理(see the last else)，因为handleRead会在read返回0时发现这一点，然后断开连接。</p>
+            </div><!-- /.entry-content -->
+            <div class="comments">
+              <h3>Comments</h3>
+              <div id="disqus_thread"></div>
+              <script type="text/javascript">
+                var disqus_identifier = "muduo-tcpconnections-write-buffer.html";
+                (function() {
+                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+                dsq.src = 'https://JingerCode.disqus.com/embed.js';
+                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+                })();
+              </script>
+            </div>
+
+
+        </div><!-- /.eleven.columns -->
+
+<div class="three columns">
+
+<h4>Pages</h4>
+
+ <ul>
+  </ul>
+
+<h4>Categories</h4>
+<ul class="blank">
+		<li><a href="/category/c.html">C++</a></li>
+		<li><a href="/category/leveldb.html">LevelDB</a></li>
+		<li><a href="/category/linux.html">Linux</a></li>
+		<li><a href="/category/muduo.html">Muduo</a></li>
+		<li><a href="/category/multithread.html">Multithread</a></li>
+		<li><a href="/category/others.html">Others</a></li>
+</ul>
+
+
+<h4>Tags</h4>
+	<ul class="blank">
+</ul>
+
+
+<nav class="widget">
+  <h4>Social</h4>
+  <ul class="blank">
+    <li><a href="#">You can add links in your config file</a></li>
+    <li><a href="#">Another social link</a></li>
+  </ul>
+</nav>
+
+</div> </div><!-- /.row -->
+
+
+</section>
+
+       </div><!-- /.row -->
+    </div><!-- /.container -->
+
+
+       <div class="container.nopad bg">
+
+    
+        <footer id="credits" class="row">
+          <div class="seven columns left-center">
+
+                   <address id="about" class="vcard body">
+                    Proudly powered by <a href="http://getpelican.com/">Pelican</a>,
+                    which takes great advantage of <a href="http://python.org">Python</a>.
+                    <br />
+                    Based on the <a target="_blank" href="http://gumbyframework.com">Gumby Framework</a>
+                    </address>
+          </div>
+
+
+          <div class="seven columns">
+            <div class="row">
+              <ul class="socbtns">
+
+
+
+
+
+              </ul>
+            </div>
+          </div>
+        </footer>
+
+    </div>
+
+
+<script type="text/javascript">
+    var disqus_shortname = 'JingerCode';
+    (function () {
+        var s = document.createElement('script'); s.async = true;
+        s.type = 'text/javascript';
+        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
+        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
+    }());
+</script>
+  <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
+  <script src="/theme/js/libs/gumby.min.js"></script>
+  <script src="/theme/js/plugins.js"></script>
+</body>
+</html>
