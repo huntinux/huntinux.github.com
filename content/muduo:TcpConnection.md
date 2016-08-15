@@ -115,11 +115,17 @@ void TcpConnection::handleRead(Timestamp receiveTime)
 
 为什么看上去这么绕？
 
-主要原因是TcpConnection是在TcpServer中创建的，但是连接断开事件是被TcpConnection得知的。TcpConnection需要将TcpServer中存放自己shared_ptr的容器中的对应响删除掉，然后才能析构。为了在TcpServer进行erase时不会将TcpConnection析构，需要使用一定的手段（`shared_from_this`）
+一个对象在被使用时，必然是不能被析构的。这里的`currentActiveChannel->handleEvent`在执行时必须保证`currentActiveChannel`不会被析构，一般小的程序当然不会有这么显而易见的错误。不过对于稍微复杂点的程序是需要考虑的。
 
-此外，TcpConnection的Channel的裸指针暴露给了EventLoop的Poller。根据上图的调用链，不能在使用Channel时将TcpConnection析构，因为TcpConnection析构时，Channel也会被析构，这就造成正在使用一个对象时，它确被析构了，将导致严重的问题。所以muduo使用`queueInLoop`使得TcpConnection的析构点位于使用完channel之后的位置（见EventLoop::loop）。
+TcpConnection是拥有一个Channel的，它负责管理该Channel的生命周期，但是却必须把Channel的裸指针暴露给EventLoop（确切的讲是暴露给Poller），因为Poller需要对Channel的事件进行管理（添加、修改、删除）。
 
-下面会进行详细分析。
+此外，TcpConnection是在TcpServer中创建的，但是连接断开事件是被TcpConnection得知的。TcpConnection需要将TcpServer中存放自己shared_ptr的容器中的对应响删除掉，然后才能析构。为了在TcpServer进行erase时不会将TcpConnection析构，需要使用一定的手段（`shared_from_this`）
+
+而且上面讲到了，TcpConnection的Channel的裸指针暴露给了EventLoop的Poller。根据上图的调用链，不能在使用Channel时将TcpConnection析构，因为TcpConnection析构时，Channel也会被析构，这就造成正在使用一个对象时，它确被析构了，将导致严重的问题。所以muduo使用`queueInLoop`使得TcpConnection的析构点位于使用完channel之后的位置（见EventLoop::loop）。
+
+看来，对于对象的生命期管理有时还是很负责。
+
+下面会继续进行分析。
 
 ## TcpConnection::handleClose
 ```c
