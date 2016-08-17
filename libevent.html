@@ -264,22 +264,24 @@ Two bufferevents that transmit data to one another.</p>
 <p>Every bufferevent has two data-related callbacks: a read callback and a write callback. By default, the read callback is called whenever any data is read from the underlying transport, and the write callback is called whenever enough data from the output buffer is emptied to the underlying transport. You can override the behavior of these functions by adjusting the read and write "watermarks" of the bufferevent.</p>
 </blockquote>
 <p>bufferevent有两个数据相关的回调函数：<code>read callback and  write callback</code>。默认情况下，<code>read callback</code>会当 从关注的socket读到了任意的数据时被调用；<code>write callback</code> 在全部的数据从output buffer传送给了对端时被调用。可以通过修改bufferevent的读写watermarks（读写水位）来修改<code>read callback and  write callback</code>的行为。</p>
-<p>4个watermarks： 
-- Read low-water mark ： 
-Whenever a read occurs that leaves the bufferevent’s input buffer at this level or higher, the bufferevent’s read callback is invoked. Defaults to 0, so that every read results in the read callback being invoked.</p>
+<p>4个watermarks： </p>
 <ul>
 <li>
+<p>Read low-water mark ： 
+Whenever a read occurs that leaves the bufferevent’s input buffer at this level or higher, the bufferevent’s read callback is invoked. Defaults to 0, so that every read results in the read callback being invoked.( 读-低水位： read callback只有在readbuffer的数据量大于等于该值时才会被调用。默认为0，所以只要有数据read callback就会被调用 )</p>
+</li>
+<li>
 <p>Read high-water mark ： 
-If the bufferevent’s input buffer ever gets to this level, the bufferevent stops reading until enough data is drained from the input buffer to take us below it again. Defaults to unlimited, so that we never stop reading because of the size of the input buffer.</p>
+If the bufferevent’s input buffer ever gets to this level, the bufferevent stops reading until enough data is drained from the input buffer to take us below it again. Defaults to unlimited, so that we never stop reading because of the size of the input buffer. ( 读-高水位：当readbuffer的数据量大于或等于该值时，bufferevent将停止读操作，不再向readbuffer添加数据，直到readbuffer中有足够的数据被取出后，才会继续读取socket往readbuffer添加数据。默认是unlimited。如果不从readbuffer取数据，或者发送者的发送速度很快，那么readbuffer会暴涨，从muduo中学到的^_^)</p>
 </li>
 <li>
 <p>Write low-water mark ： 
-Whenever a write occurs that takes us to this level or below, we invoke the write callback. Defaults to 0, so that a write callback is not invoked unless the output buffer is emptied.</p>
+Whenever a write occurs that takes us to this level or below, we invoke the write callback. Defaults to 0, so that a write callback is not invoked unless the output buffer is emptied.(写-低水位：当writebuffer可以空间大小小于或等于该值时，write callback被调用。默认为0，所以只有当writebuffer为空时，write callback才会被调用)</p>
 </li>
 <li>
 <p>Write high-water mark ： 
 Not used by a bufferevent directly, this watermark can have special meaning when a bufferevent is used as the underlying
-transport of another bufferevent. See notes on filtering bufferevents below.</p>
+transport of another bufferevent. See notes on filtering bufferevents below.(写-高水位：略)</p>
 </li>
 </ul>
 <h2>Working with socket-based bufferevent</h2>
