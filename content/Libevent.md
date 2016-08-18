@@ -348,6 +348,11 @@ int main(int argc, char **argv)
 
 
 
+# Examples & Summary
+> https://github.com/huntinux/libevent-learn
+
+libevent是一个跨平台的、异步非阻塞网络库。使用时只需要告诉libevent你关心什么事件，以及事件发生时要做什么（回调函数），底层是`非阻塞socket`+`IO multiplexing（select、epoll...）`。 
+异步非阻塞网络库是需要`input buffer` 和 `output buffer`的，muduo中提到了原因。ibevent中的bufferevent拥有输入/输出缓冲区，并且可以设置`高水位回调`和`低水位回调`，这样就更加方便了。
 
 
 

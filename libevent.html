@@ -393,6 +393,14 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
+
+
+<h1>Examples &amp; Summary</h1>
+<blockquote>
+<p>https://github.com/huntinux/libevent-learn</p>
+</blockquote>
+<p>libevent是一个跨平台的、异步非阻塞网络库。使用时只需要告诉libevent你关心什么事件，以及事件发生时要做什么（回调函数），底层是<code>非阻塞socket</code>+<code>IO multiplexing（select、epoll...）</code>。 
+异步非阻塞网络库是需要<code>input buffer</code> 和 <code>output buffer</code>的，muduo中提到了原因。ibevent中的bufferevent拥有输入/输出缓冲区，并且可以设置<code>高水位回调</code>和<code>低水位回调</code>，这样就更加方便了。</p>
             </div><!-- /.entry-content -->
             <div class="comments">
               <h3>Comments</h3>
