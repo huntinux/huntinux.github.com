@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-06-29T09:00:00+08:00">
-                Wed 29 June 2016
+                三 29 六月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -88,42 +88,42 @@
 </ul>
 <p>用户可以通过环境变量来disable某种method，如设置EVENT_NOKQUEUE环境变量将禁止kqueue。在程序中可以使用<code>event_config_avoid_method()</code>函数来禁用某种method。</p>
 <h2>获取一个默认的event_base</h2>
-<div class="highlight"><pre><span class="c1">// &lt;event2/event.h&gt;</span>
-<span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">event_base_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="c1">// &lt;event2/event.h&gt;</span>
+<span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="nf">event_base_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
 </pre></div>
 
 
 <p>event_base_new()函数分配并返回一个新的event_base(默认设置)。它会检查环境变量并返回一个指向新的event_base的指针。发生错误时，返回NULL。在选择method的时候，会选取当前OS支持的最快的method。</p>
 <h2>获取经过配置的event_base</h2>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">event_config</span> <span class="o">*</span><span class="n">event_config_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
-<span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">event_base_new_with_config</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">event_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">);</span>
-<span class="kt">void</span> <span class="n">event_config_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">event_config</span> <span class="o">*</span><span class="nf">event_config_new</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="nf">event_base_new_with_config</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">event_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">event_config_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_config</span> <span class="o">*</span><span class="n">cfg</span><span class="p">);</span>
 </pre></div>
 
 
 <h2>确定event_base可以使用哪些method</h2>
-<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="n">event_get_supported_methods</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="o">**</span><span class="nf">event_get_supported_methods</span><span class="p">(</span><span class="kt">void</span><span class="p">);</span>
 </pre></div>
 
 
 <h2>确定event_base在使用哪种method</h2>
-<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">event_base_get_method</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
-<span class="k">enum</span> <span class="n">event_method_feature</span> <span class="n">event_base_get_features</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="nf">event_base_get_method</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+<span class="k">enum</span> <span class="n">event_method_feature</span> <span class="nf">event_base_get_features</span><span class="p">(</span><span class="k">const</span> <span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
 </pre></div>
 
 
 <h2>释放event_base</h2>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">event_base_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">event_base_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
 </pre></div>
 
 
 <h2>在fork()之后对event_base进行Reinitializing</h2>
-<div class="highlight"><pre><span class="kt">int</span> <span class="n">event_reinit</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">event_reinit</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
 </pre></div>
 
 
 <h2>测试程序</h2>
-<div class="highlight"><pre><span class="cp">#include &lt;event2/event.h&gt;</span>
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;event2/event.h&gt;</span><span class="cp"></span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">()</span>
 <span class="p">{</span>
@@ -163,35 +163,35 @@
 
 <h1>Chapter7 : Working with event loop</h1>
 <p>在创建了event_base，并在它上面注册了一些event之后，可以使用<code>event_base_loop()</code>来检测事件是否就绪。</p>
-<div class="highlight"><pre><span class="cp">#define EVLOOP_ONCE             0x01</span>
+<div class="highlight"><pre><span></span><span class="cp">#define EVLOOP_ONCE             0x01</span>
 <span class="cp">#define EVLOOP_NONBLOCK         0x02</span>
 <span class="cp">#define EVLOOP_NO_EXIT_ON_EMPTY 0x04</span>
-<span class="kt">int</span> <span class="n">event_base_loop</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
+<span class="kt">int</span> <span class="nf">event_base_loop</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="kt">int</span> <span class="n">flags</span><span class="p">);</span>
 </pre></div>
 
 
 <p>event_base_loop的伪代码</p>
-<div class="highlight"><pre><span class="k">while</span> <span class="p">(</span><span class="n">any</span> <span class="n">events</span> <span class="n">are</span> <span class="n">registered</span> <span class="n">with</span> <span class="n">the</span> <span class="n">loop</span><span class="p">,</span>
-        <span class="ow">or</span> <span class="n">EVLOOP_NO_EXIT_ON_EMPTY</span> <span class="n">was</span> <span class="n">set</span><span class="p">)</span> <span class="p">{</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">EVLOOP_NONBLOCK</span> <span class="n">was</span> <span class="n">set</span><span class="p">,</span> <span class="ow">or</span> <span class="n">any</span> <span class="n">events</span> <span class="n">are</span> <span class="n">already</span> <span class="n">active</span><span class="p">)</span>
-        <span class="n">If</span> <span class="n">any</span> <span class="n">registered</span> <span class="n">events</span> <span class="n">have</span> <span class="n">triggered</span><span class="p">,</span> <span class="n">mark</span> <span class="n">them</span> <span class="n">active</span><span class="o">.</span>
-    <span class="k">else</span>
-        <span class="n">Wait</span> <span class="k">until</span> <span class="n">at</span> <span class="n">least</span> <span class="n">one</span> <span class="n">event</span> <span class="n">has</span> <span class="n">triggered</span><span class="p">,</span> <span class="ow">and</span> <span class="n">mark</span> <span class="n">it</span> <span class="n">active</span><span class="o">.</span>
+<div class="highlight"><pre><span></span>while (any events are registered with the loop,
+        or EVLOOP_NO_EXIT_ON_EMPTY was set) {
+    if (EVLOOP_NONBLOCK was set, or any events are already active)
+        If any registered events have triggered, mark them active.
+    else
+        Wait until at least one event has triggered, and mark it active.
 
-    <span class="k">for</span> <span class="p">(</span><span class="n">p</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">p</span> <span class="o">&lt;</span> <span class="n">n_priorities</span><span class="p">;</span> <span class="o">++</span><span class="n">p</span> <span class="p">{</span>
-        <span class="k">if</span> <span class="p">(</span><span class="n">any</span> <span class="n">event</span> <span class="n">with</span> <span class="n">priority</span> <span class="n">of</span> <span class="n">p</span> <span class="n">is</span> <span class="n">active</span><span class="p">)</span> <span class="p">{</span>
-            <span class="n">Run</span> <span class="n">all</span> <span class="n">active</span> <span class="n">events</span> <span class="n">with</span> <span class="n">priority</span> <span class="n">of</span> <span class="n">p</span><span class="o">.</span>
-            <span class="n">break</span><span class="p">;</span> <span class="sr">/* Do not run any events of a less important priority */</span>
-        <span class="p">}</span>
-    <span class="p">}</span>
-    <span class="k">if</span> <span class="p">(</span><span class="n">EVLOOP_ONCE</span> <span class="n">was</span> <span class="n">set</span> <span class="ow">or</span> <span class="n">EVLOOP_NONBLOCK</span> <span class="n">was</span> <span class="n">set</span><span class="p">)</span>
-        <span class="n">break</span><span class="p">;</span>
-<span class="p">}</span>
+    for (p = 0; p &lt; n_priorities; ++p {
+        if (any event with priority of p is active) {
+            Run all active events with priority of p.
+            break; /* Do not run any events of a less important priority */
+        }
+    }
+    if (EVLOOP_ONCE was set or EVLOOP_NONBLOCK was set)
+        break;
+}
 </pre></div>
 
 
 <p>可以使用event_base_dispatch，它与event_base_loop相同，只不过没有flag参数，它会一直运行，直到没有注册事件或<code>event_base_loopbreak() or event_base_loopexit()</code>被调用。</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="n">event_base_dispatch</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">event_base_dispatch</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">);</span>
 </pre></div>
 
 
@@ -209,14 +209,14 @@
 <p>Events have similar lifecycles. Once you call a Libevent function to set up an event and associate it with an event base, it becomes <strong>initialized</strong>. At this point, you can add, which makes it <strong>pending</strong> in the base. When the event is pending, if the conditions that would trigger an event occur (e.g., its file descriptor changes state or its timeout expires), the event becomes <strong>active</strong>, and its (user-provided) callback function is run. If the event is configured <strong>persistent</strong>  , it remains pending. If it is not persistent, it stops being pending when its callback runs. You can make a pending event non-pending by deleting it, and you can add a non-pending event to make it pending again.</p>
 </blockquote>
 <h2>创建一个event</h2>
-<div class="highlight"><pre><span class="cm">/** Indicates that a timeout has occurred.  It&#39;s not necessary to pass</span>
+<div class="highlight"><pre><span></span><span class="cm">/** Indicates that a timeout has occurred.  It&#39;s not necessary to pass</span>
 <span class="cm"> * this flag to event_for new()/event_assign() to get a timeout. */</span>
 <span class="cp">#define EV_TIMEOUT  0x01</span>
-<span class="cp">/** Wait for a socket or FD to become readable */</span>
+<span class="cm">/** Wait for a socket or FD to become readable */</span>
 <span class="cp">#define EV_READ     0x02</span>
-<span class="cp">/** Wait for a socket or FD to become writeable */</span>
+<span class="cm">/** Wait for a socket or FD to become writeable */</span>
 <span class="cp">#define EV_WRITE    0x04</span>
-<span class="cp">/** Wait for a POSIX signal to be raised*/</span>
+<span class="cm">/** Wait for a POSIX signal to be raised*/</span>
 <span class="cp">#define EV_SIGNAL   0x08</span>
 <span class="cm">/**</span>
 <span class="cm"> * Persistent event: won&#39;t get removed automatically when activated.</span>
@@ -225,17 +225,17 @@
 <span class="cm"> * is reset to 0.</span>
 <span class="cm"> */</span>
 <span class="cp">#define EV_PERSIST  0x10</span>
-<span class="cp">/** Select edge-triggered behavior, if supported by the backend. */</span>
+<span class="cm">/** Select edge-triggered behavior, if supported by the backend. */</span>
 <span class="cp">#define EV_ET       0x20</span>
 
-<span class="k">typedef</span> <span class="kt">void</span> <span class="p">(</span><span class="o">*</span><span class="n">event_callback_fn</span><span class="p">)(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
-<span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">event_new</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="n">event_callback_fn</span> <span class="n">cb</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
-<span class="kt">void</span> <span class="n">event_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">event</span><span class="p">);</span>
+<span class="k">typedef</span> <span class="nf">void</span> <span class="p">(</span><span class="o">*</span><span class="n">event_callback_fn</span><span class="p">)(</span><span class="n">evutil_socket_t</span><span class="p">,</span> <span class="kt">short</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="p">);</span>
+<span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="nf">event_new</span><span class="p">(</span><span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span> <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span> <span class="kt">short</span> <span class="n">what</span><span class="p">,</span> <span class="n">event_callback_fn</span> <span class="n">cb</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">arg</span><span class="p">);</span>
+<span class="kt">void</span> <span class="nf">event_free</span><span class="p">(</span><span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">event</span><span class="p">);</span>
 </pre></div>
 
 
 <p>创建了一个event之后，使用event_add让event加入event_base, 进入pending状态。</p>
-<div class="highlight"><pre><span class="kt">int</span> <span class="n">event_add</span><span class="p">(</span><span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">timeval</span> <span class="o">*</span><span class="n">tv</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">event_add</span><span class="p">(</span><span class="k">struct</span> <span class="n">event</span> <span class="o">*</span><span class="n">ev</span><span class="p">,</span> <span class="k">const</span> <span class="k">struct</span> <span class="n">timeval</span> <span class="o">*</span><span class="n">tv</span><span class="p">);</span>
 </pre></div>
 
 
@@ -287,7 +287,7 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
 <h2>Working with socket-based bufferevent</h2>
 <p>socket-based的bufferevent是最简单易用的bufferevent类型， 它使用Libevent的事件机制来检查socket是否“读就绪”或“写就绪”，并使用网络系统调用（readv, writev, WSASend, or WSARecv）来收发数据。</p>
 <h3>创建一个socket-based bufferevent</h3>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">bufferevent</span> <span class="o">*</span><span class="n">bufferevent_socket_new</span><span class="p">(</span>
+<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">bufferevent</span> <span class="o">*</span><span class="nf">bufferevent_socket_new</span><span class="p">(</span>
     <span class="k">struct</span> <span class="n">event_base</span> <span class="o">*</span><span class="n">base</span><span class="p">,</span>
     <span class="n">evutil_socket_t</span> <span class="n">fd</span><span class="p">,</span>
     <span class="k">enum</span> <span class="n">bufferevent_options</span> <span class="n">options</span><span class="p">);</span>
@@ -295,20 +295,20 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
 
 
 <h3>在socket-based bufferevent上发起连接</h3>
-<div class="highlight"><pre><span class="kt">int</span> <span class="n">bufferevent_socket_connect</span><span class="p">(</span><span class="k">struct</span> <span class="n">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span>
+<div class="highlight"><pre><span></span><span class="kt">int</span> <span class="nf">bufferevent_socket_connect</span><span class="p">(</span><span class="k">struct</span> <span class="n">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span>
     <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">*</span><span class="n">address</span><span class="p">,</span> <span class="kt">int</span> <span class="n">addrlen</span><span class="p">);</span>
 </pre></div>
 
 
 <h1>Chapter13 : Connection Listener</h1>
-<div class="highlight"><pre><span class="cp">#include &lt;event2/listener.h&gt;</span>
-<span class="cp">#include &lt;event2/bufferevent.h&gt;</span>
-<span class="cp">#include &lt;event2/buffer.h&gt;</span>
-<span class="cp">#include &lt;arpa/inet.h&gt;</span>
-<span class="cp">#include &lt;string.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;errno.h&gt;</span>
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;event2/listener.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;event2/bufferevent.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;event2/buffer.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;arpa/inet.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;string.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;errno.h&gt;</span><span class="cp"></span>
 
 <span class="k">static</span> <span class="kt">void</span>
 <span class="nf">echo_read_cb</span><span class="p">(</span><span class="k">struct</span> <span class="n">bufferevent</span> <span class="o">*</span><span class="n">bev</span><span class="p">,</span> <span class="kt">void</span> <span class="o">*</span><span class="n">ctx</span><span class="p">)</span>
@@ -402,18 +402,6 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
 <p>libevent是一个跨平台的、异步非阻塞网络库。使用时只需要告诉libevent你关心什么事件，以及事件发生时要做什么（回调函数），底层是<code>非阻塞socket</code>+<code>IO multiplexing（select、epoll...）</code>。 
 异步非阻塞网络库是需要<code>input buffer</code> 和 <code>output buffer</code>的，muduo中提到了原因。ibevent中的bufferevent拥有输入/输出缓冲区，并且可以设置<code>高水位回调</code>和<code>低水位回调</code>，这样就更加方便了。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "libevent.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -433,12 +421,10 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -477,6 +463,7 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -489,15 +476,6 @@ transport of another bufferevent. See notes on filtering bufferevents below.(写
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

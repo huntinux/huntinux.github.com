@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-08-12T16:00:00+08:00">
-                Fri 12 August 2016
+                五 12 八月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -68,7 +68,7 @@
 <p>发送数据比接收数据更难，因为发送数据是主动的，接收读取数据是被动的。因为muduo采用的是LT模式，因为合适注册writeable事件需要好好考虑。muduo的send函数的策略是这样的，先判断outputBuffer中是否有数据，如果没有那么尝试直接发送数据，如果一次没有发送完就把剩余的数据放到outputBuffer中，并注册writeable事件，以后在handleWrite中发送剩余数据；如果outputBuffer中有数据就不能尝试先发送了，因为会造成数据乱序。</p>
 <h2>TcpConnection::send</h2>
 <p>send函数有3个重载，大体相同，这里只给出一个。</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">send</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">send</span><span class="p">(</span><span class="k">const</span> <span class="kt">void</span><span class="o">*</span> <span class="n">data</span><span class="p">,</span> <span class="kt">size_t</span> <span class="n">len</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">state_</span> <span class="o">==</span> <span class="n">kConnected</span><span class="p">)</span>
   <span class="p">{</span>
@@ -145,7 +145,7 @@
 
 
 <h2>TcpConnection::handleWrite</h2>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleWrite</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleWrite</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">channel_</span><span class="o">-&gt;</span><span class="n">isWriting</span><span class="p">())</span>
@@ -192,18 +192,6 @@
 <p>想想一下一个proxy，C和S通过该proxy连接，S的发送数据速度很快，C的读取数据的速度很慢，那么proxy的outputBuffer会暴涨。为了协调一下收发的速度，可以使用<code>高水位回调</code>。</p>
 <p>当TcpConnection::outputBuffer的大小到达某个值时（hightWaterMark），HighWaterMarkCallback函数被调用。在该函数中可以先停止对读事件的关注，在outputBuffer发送完毕（即WirteCompleteCallback被调用时）再开启对读事件的关注。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-tcpconnections-write-buffer.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -223,12 +211,10 @@
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -267,6 +253,7 @@
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -279,15 +266,6 @@
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

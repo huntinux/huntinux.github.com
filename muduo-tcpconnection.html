@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-08-11T15:00:00+08:00">
-                Thu 11 August 2016
+                四 11 八月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -66,13 +66,13 @@
 <p>前面学习了TcpServer的实现，TcpServer对每个连接都会新建一个TcpConnection（使用shared_ptr管理）。接下来学习一下TcpConnection的设计细节。</p>
 <h1>连接状态</h1>
 <p>muduo对于一个连接的从生到死进行了状态的定义，类似一个状态机。</p>
-<div class="highlight"><pre><span class="k">enum</span> <span class="n">States</span> <span class="p">{</span> <span class="n">kDisconnected</span><span class="p">,</span> <span class="n">kConnecting</span><span class="p">,</span> <span class="n">kConnected</span><span class="p">,</span> <span class="n">kDisconnecting</span> <span class="p">};</span>
+<div class="highlight"><pre><span></span><span class="k">enum</span> <span class="n">States</span> <span class="p">{</span> <span class="n">kDisconnected</span><span class="p">,</span> <span class="n">kConnecting</span><span class="p">,</span> <span class="n">kConnected</span><span class="p">,</span> <span class="n">kDisconnecting</span> <span class="p">};</span>
 </pre></div>
 
 
 <p>分别代表：已经断开、初始状态、已连接、正在断开</p>
 <h1>成员变量</h1>
-<div class="highlight"><pre><span class="n">private</span>
+<div class="highlight"><pre><span></span><span class="n">private</span>
   <span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop_</span><span class="p">;</span> <span class="c1">// 神一样的存在，EventLoop</span>
   <span class="n">string</span> <span class="n">name_</span><span class="p">;</span>
   <span class="n">States</span> <span class="n">state_</span><span class="p">;</span>  <span class="c1">// FIXME: use atomic variable</span>
@@ -94,7 +94,7 @@
 
 <p>先理解上面的 <code>loop_</code>, <code>socket_</code>, <code>channel_</code>好了，不明白请翻阅前几篇文章。</p>
 <h1>构造/析构函数</h1>
-<div class="highlight"><pre><span class="n">TcpConnection</span><span class="o">::</span><span class="n">TcpConnection</span><span class="p">(</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop</span><span class="p">,</span>
+<div class="highlight"><pre><span></span><span class="n">TcpConnection</span><span class="o">::</span><span class="n">TcpConnection</span><span class="p">(</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop</span><span class="p">,</span>
                              <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name__</span><span class="p">,</span>
                              <span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span>
                              <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span> <span class="n">localAddr</span><span class="p">,</span>
@@ -131,7 +131,7 @@
 
 <p>构造函数在初始化列表中对socket、channel等进行了初始化，在函数体中设置了回调函数。</p>
 <h1>TcpConnection::handleRead</h1>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleRead</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleRead</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
   <span class="kt">int</span> <span class="n">savedErrno</span><span class="p">;</span>
@@ -156,7 +156,7 @@
 <p>前面提到了，在已连接套接字可读时，调用<code>TcpConnection::handleRead</code>，进而调用用户设置的回调函数<code>messageCallback_</code></p>
 <h1>连接的断开</h1>
 <p>这是muduo提到的<code>三个半事件</code>中的另一个事件，即处理连接的断开。这个过程比较绕，是这样事儿的，图中的<code>X</code>表示TcpConnection通常在此析构:</p>
-<p><img alt="这里写图片描述" src="https://lh3.googleusercontent.com/hpgbPt4QAAJ0RrfDgCfSvjUbOrJkMjLy_uy0-AALrlZAJ5Vyh_IlEhrPafS-7KHT7zyGdgTTadiw3rzICvJRqiAcLs9rlQd20D9gsETRaaO6RaHyxulErmpRmvBxUgx58GJdo4XHlYxjVv0MvjmElV6yYJSBHFVKEJesM54fd1gLaJgJ-OtdPwDD3cFf6gO8UTfWUR1UavniqHPzCU454o7YR6wnHQMXtVHmZzTXjF_VKKyQa3dV1d3sMouZ86WzI1ku13m1QbbzBuVWAEJjZ8bQU4ebDhMT08yoAL4uIWbKzGatRrFPaX9hNWrSh8jjmG5geeogs_yjOA6sELYpwqGXDiA7m0ew9E0ZkjzqVz0Ke_e14HRME88QpTYa1ZrnTIQXwyasr5Mkss3uABAVwOA0kG3_wlLxc7EeaplEDAOBXbJLuFvDqA1CDcnFOn7ZfEGNnz0w60bJneiwTT-Y0NRTwPVF0ASdZ7-S_JV4AydlK-ULQpl-cRoMd3wcnnNDi790Am_GYxzW-fwmlxjzTeXGCcMKKnFSiC8BbzjJKL1MYtSzD9MYfVqkeE8iuXrpD8A9gG5yUeuYn77OpLtwCi9W_7hflg=w806-h509-no" /></p>
+<p><img alt="这里写图片描述" src="https://lh3.googleusercontent.com/hpgbPt4QAAJ0RrfDgCfSvjUbOrJkMjLy_uy0-AALrlZAJ5Vyh_IlEhrPafS-7KHT7zyGdgTTadiw3rzICvJRqiAcLs9rlQd20D9gsETRaaO6RaHyxulErmpRmvBxUgx58GJdo4XHlYxjVv0MvjmElV6yYJSBHFVKEJesM54fd1gLaJgJ-OtdPwDD3cFf6gO8UTfWUR1UavniqHPzCU454o7YR6wnHQMXtVHmZzTXjF_VKKyQa3dV1d3sMouZ86WzI1ku13m1QbbzBuVWAEJjZ8bQU4ebDhMT08yoAL4uIWbKzGatRrFPaX9hNWrSh8jjmG5geeogs_yjOA6sELYpwqGXDiA7m0ew9E0ZkjzqVz0Ke_e14HRME88QpTYa1ZrnTIQXwyasr5Mkss3uABAVwOA0kG3_wlLxc7EeaplEDAOBXbJLuFvDqA1CDcnFOn7ZfEGNnz0w60bJneiwTT-Y0NRTwPVF0ASdZ7-S_JV4AydlK-ULQpl-cRoMd3wcnnNDi790Am_GYxzW-fwmlxjzTeXGCcMKKnFSiC8BbzjJKL1MYtSzD9MYfVqkeE8iuXrpD8A9gG5yUeuYn77OpLtwCi9W_7hflg=w806-h509-no"></p>
 <p>为什么看上去这么绕？</p>
 <p>一个对象在被使用时，必然是不能被析构的。这里的<code>currentActiveChannel-&gt;handleEvent</code>在执行时必须保证<code>currentActiveChannel</code>不会被析构，一般小的程序当然不会有这么显而易见的错误。不过对于稍微复杂点的程序是需要考虑的。</p>
 <p>TcpConnection是拥有一个Channel的，它负责管理该Channel的生命周期，但是却必须把Channel的裸指针暴露给EventLoop（确切的讲是暴露给Poller），因为Poller需要对Channel的事件进行管理（添加、修改、删除）。</p>
@@ -165,14 +165,14 @@
 <p>看来，对于对象的生命期管理有时还是很负责。</p>
 <p>下面会继续进行分析。</p>
 <h2>TcpConnection::handleClose</h2>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleClose</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">handleClose</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
   <span class="c1">// we don&#39;t close fd, leave it to dtor, so we can find leaks easily.</span>
   <span class="n">setState</span><span class="p">(</span><span class="n">kDisconnected</span><span class="p">);</span> <span class="c1">// 设置状态为kDisconnected，表示已断开</span>
   <span class="n">channel_</span><span class="o">-&gt;</span><span class="n">disableAll</span><span class="p">();</span>  <span class="c1">// 移除注册的事件，使用epoll时是EPOLL_CTL_DEL</span>
 
-  <span class="n">TcpConnectionPtr</span> <span class="n">guardThis</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span> <span class="c1">// 延长本对象的生命周期，引用计数为2</span>
+  <span class="n">TcpConnectionPtr</span> <span class="nf">guardThis</span><span class="p">(</span><span class="n">shared_from_this</span><span class="p">());</span> <span class="c1">// 延长本对象的生命周期，引用计数为2</span>
 
   <span class="c1">// 调用用户回调函数</span>
   <span class="n">connectionCallback_</span><span class="p">(</span><span class="n">guardThis</span><span class="p">);</span> <span class="c1">// 参数为shared_ptr,保证了 connectionCallback_能安全的使用本对象</span>
@@ -186,7 +186,7 @@
 
 <p>连接断开时，会调用<code>TcpConnection::handleClose</code>；接着调用用户回调<code>connectionCallback_</code>；最后调用<code>closeCallback_</code>，即<code>TcpServer::removeConnection</code>(TcpServer创建TcpConnection时设置的)</p>
 <h2>TcpServer::removeConnection</h2>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpServer</span><span class="o">::</span><span class="n">removeConnection</span><span class="p">(</span><span class="k">const</span> <span class="n">TcpConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">TcpServer</span><span class="o">::</span><span class="n">removeConnection</span><span class="p">(</span><span class="k">const</span> <span class="n">TcpConnectionPtr</span><span class="o">&amp;</span> <span class="n">conn</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">runInLoop</span><span class="p">(</span><span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">TcpServer</span><span class="o">::</span><span class="n">removeConnectionInLoop</span><span class="p">,</span> <span class="n">this</span><span class="p">,</span> <span class="n">conn</span><span class="p">));</span>
 <span class="p">}</span>
@@ -215,7 +215,7 @@
 <p>最后<code>queueInLoop</code>就是将<code>TcpConnection::connectDestroyed</code>函数移动到EventLoop中执行，执行位置就是在<code>Channel-&gt;handleEvent</code>之后，此时可以安全的析构TcpConnection。（这么做的原因见前面）</p>
 <p>注意上面最后的boost::bind,它让TcpConnection的生命期长到调用connectDestroyed的时刻。在<code>connectDestroyed</code>执行完之后，TcpConnection才被析构。</p>
 <h2>TcpConnection::connectDestroyed</h2>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">connectDestroyed</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">TcpConnection</span><span class="o">::</span><span class="n">connectDestroyed</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">state_</span> <span class="o">==</span> <span class="n">kConnected</span><span class="p">)</span>
@@ -235,18 +235,6 @@
 <p><code>TcpConnection::connectDestroyed</code>是该对象析构前调用的最后一个成员函数，它会通知用户连接已经断开。</p>
 <p>我已经用了洪荒之力来理解TcpConnection，实在是太绕了。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-tcpconnection.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -266,12 +254,10 @@
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -310,6 +296,7 @@
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -322,15 +309,6 @@
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

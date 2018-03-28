@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-06-26T09:00:00+08:00">
-                Sun 26 June 2016
+                日 26 六月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -78,12 +78,12 @@
 <p>Skip List被用来实现leveldb中的memtable，此外也被用来实现Redis中的sorted sets数据结构。</p>
 <h1>分析</h1>
 <p>一个单向链表：</p>
-<p><img alt="这里写图片描述" src="http://igoro.com/wordpress/wp-content/uploads/2008/07/list.png" /></p>
+<p><img alt="这里写图片描述" src="http://igoro.com/wordpress/wp-content/uploads/2008/07/list.png"></p>
 <p>在单向链表中进行查找的时间复杂度是O(N)。此外，由于插入、删除操作首先都要使用查找操作，因此如何提高查找的性能成为关键问题。</p>
 <p>一种改善查找性能的方法，建立多级链表</p>
-<p><img alt="这里写图片描述" src="http://igoro.com/wordpress/wp-content/uploads/2008/07/multilist.png" /></p>
+<p><img alt="这里写图片描述" src="http://igoro.com/wordpress/wp-content/uploads/2008/07/multilist.png"></p>
 <p>那么查找7的过程是这样的（红色箭头）：</p>
-<p><img alt="这里写图片描述" src="http://igoro.com/wordpress/wp-content/uploads/2008/07/multilist-search.png" /></p>
+<p><img alt="这里写图片描述" src="http://igoro.com/wordpress/wp-content/uploads/2008/07/multilist-search.png"></p>
 <p>从最高层链表（最稀疏的）开始，因为7小于12，所以进入下层链表继续查找，这样就不会在链表的后半部进行查找，所以查找范围减少了一半，过程类似<code>折半查找</code>。后续的查找过程类似，最后定位到7的位置。</p>
 <p>所以，通过建立多级链表，可以提高查找性能。每层链表都是跳跃性前进的（skip），因此
 称为  <code>Skip List</code>。Skip List通过在查找过程中“跳过”一些节点使得<code>find</code>,<code>insert</code>, <code>remove</code>的时间复杂度为O(lgN)。</p>
@@ -94,42 +94,42 @@
 <p>每个节点都在若干个level中出现，或者说节点有若干个level，而每个level是一个前进的指针。如果该节点有n个level，那么称该节点的size是n。</p>
 <h1>每级链表的跳跃距离</h1>
 <p>上面的skip list的最底层链表跳跃距离是1，第二次跳跃距离是2，最高层是4。这种跳跃策略是固定的。实际上，常用的跳跃策略是是<code>基于概率的跳跃（probabilistically）</code>，像这样事儿的：</p>
-<p><img alt="这里写图片描述" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Skip_list.svg/1000px-Skip_list.svg.png" /></p>
+<p><img alt="这里写图片描述" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Skip_list.svg/1000px-Skip_list.svg.png"></p>
 <p>关于probabilistically策略，wikipedia是这样介绍的：</p>
 <blockquote>
 <p>an element in layer i appears in layer i+1 with some fixed probability p (two commonly used values for p are 1/2 or 1/4). On average, each element appears in 1/(1-p) , and the tallest element (usually a special head element at the front of the skip list) in all the lists ...（公式无法复制）</p>
 </blockquote>
 <p>在第i层出现的元素出现在i+1层出现的概率是p（p通常是1/2或1/4）。平均下来，每个元素出现在1/(1-p)个链表中。</p>
-<p>其中比较特殊的元素是head，它出现在所有list中，高度是 ： <img alt="" src="https://en.wikipedia.org/api/rest_v1/media/math/render/svg/909fb0d0b25ebd96ecfab41e93ce5ee2c1e2df79" /></p>
+<p>其中比较特殊的元素是head，它出现在所有list中，高度是 ： <img alt="" src="https://en.wikipedia.org/api/rest_v1/media/math/render/svg/909fb0d0b25ebd96ecfab41e93ce5ee2c1e2df79"></p>
 <h1>为什么要使用随机的level</h1>
 <p>原文解释在<a href="http://www.csee.umbc.edu/courses/undergraduate/341/fall01/Lectures/SkipLists/skip_lists/skip_lists.html#skip:page:find">这里</a>
 大概是说，如果每层跳跃是2的i次方（i代表层数）,那么<code>find</code>性能与二分查找类似，确实能达到O(lgN)，但是<code>insert</code>和<code>delete</code>的性能却是O(N)。因为插入或删除时需要对节点进行必要的调整。 </p>
 <blockquote>
-<p>This data structure is looking pretty good, but there's a serious problem with it for the insert and remove operations. The work required to reorganize the list after an insertion or deletion is in <span class="math">\(O(n)\)</span>. 
+<p>This data structure is looking pretty good, but there's a serious problem with it for the insert and remove operations. The work required to reorganize the list after an insertion or deletion is in $O(n)$. 
 For example, suppose that the first element is removed in Figure 3. Since it is necessary to maintain the strict pattern of node sizes, values from 2 to the end must be moved toward the head and the end node must be removed. A similar situation occurs when a new element is added to the list. This is where the probabilistic approach of a true Skip List comes into play. 
-A Skip List is built with the same distribution of node sizes, but without the requirement for the rigid pattern of node sizes shown. It is no longer necessary to maintain the rigid pattern by moving values around after a remove or insert operation. Pugh shows that with high probability such a list still exhibits <span class="math">\(O(\lg n)\)</span> behavior. The probability that a given Skip List will perform badly is very small. </p>
+A Skip List is built with the same distribution of node sizes, but without the requirement for the rigid pattern of node sizes shown. It is no longer necessary to maintain the rigid pattern by moving values around after a remove or insert operation. Pugh shows that with high probability such a list still exhibits $O(\lg n)$ behavior. The probability that a given Skip List will perform badly is very small. </p>
 </blockquote>
 <h1>确定Max Level</h1>
 <blockquote>
-<p>The level of the header node is the maximum allowed level in the SkipList and is chosen at construction. Pugh shows that the maximum level should be chosen as <span class="math">\(\log_\frac{1}{p} n\)</span>. Thus, for <span class="math">\(p = \frac{1}{2}\)</span>, the maximum level for a SkipList of up to 65,536 elements should be chosen no smaller than <span class="math">\(\lg_2 65536 = 16\)</span>. </p>
+<p>The level of the header node is the maximum allowed level in the SkipList and is chosen at construction. Pugh shows that the maximum level should be chosen as $\log_\frac{1}{p} n$. Thus, for $p = \frac{1}{2}$, the maximum level for a SkipList of up to 65,536 elements should be chosen no smaller than $\lg_2 65536 = 16$. </p>
 </blockquote>
-<p>对于<span class="math">\(p = \frac{1}{2}\)</span>, 有65536个元素的SkipList，MaxLevel应该小于<span class="math">\(\lg_2 65536 = 16\)</span></p>
+<p>对于$p = \frac{1}{2}$, 有65536个元素的SkipList，MaxLevel应该小于$\lg_2 65536 = 16$</p>
 <h1>随机生成节点的level</h1>
 <p>节点的level是根据概率p随机生成的。伪代码如下所示：</p>
-<div class="highlight"><pre>   <span class="nb">int</span> <span class="n">generateNodeLevel</span><span class="p">(</span><span class="n">double</span> <span class="n">p</span><span class="p">,</span> <span class="nb">int</span> <span class="n">maxLevel</span><span class="p">)</span>
-   <span class="p">{</span>
-    <span class="nb">int</span> <span class="n">level</span> <span class="o">=</span> <span class="mi">1</span><span class="p">;</span>
+<div class="highlight"><pre><span></span>   int generateNodeLevel(double p, int maxLevel)
+   {
+    int level = 1;
 
-    <span class="k">while</span> <span class="p">(</span><span class="n">drand48</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p</span><span class="p">)</span>
-      <span class="n">level</span><span class="o">++</span><span class="p">;</span>
-    <span class="k">return</span> <span class="p">(</span><span class="n">level</span> <span class="o">&gt;</span> <span class="n">maxLevel</span><span class="p">)</span> <span class="p">?</span> <span class="n">maxLevel</span> <span class="p">:</span> <span class="n">level</span><span class="p">;</span>
-   <span class="p">}</span>
+    while (drand48() &lt; p)
+      level++;
+    return (level &gt; maxLevel) ? maxLevel : level;
+   }
 </pre></div>
 
 
-<p>那么<code>find</code>的平均比对次数为： <span class="math">\(1 + \frac{\log_\frac{1}{p} n}{p} + \frac{1}{1 - p}\)</span></p>
-<p>具体来说，对于含有n=65536个元素的skiplist来说，<span class="math">\(p = \frac{1}{4}\)</span> ，则平均比较次数为34.3； <span class="math">\(p = \frac{1}{2}\)</span>， 则平均比较次数为35。</p>
-<p>对于一个sorted list来说，平均查找次数是<span class="math">\(\frac{n}{2} = 32768\)</span></p>
+<p>那么<code>find</code>的平均比对次数为： $1 + \frac{\log_\frac{1}{p} n}{p} + \frac{1}{1 - p}$</p>
+<p>具体来说，对于含有n=65536个元素的skiplist来说，$p = \frac{1}{4}$ ，则平均比较次数为34.3； $p = \frac{1}{2}$， 则平均比较次数为35。</p>
+<p>对于一个sorted list来说，平均查找次数是$\frac{n}{2} = 32768$</p>
 <p>可以看到，skip list的查找性能有多大的提升。</p>
 <blockquote>
 <p><a href="http://www.tiuicool.com/articles/uuQryy3">这篇文章指出</a>：
@@ -144,13 +144,13 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 源码位置: db/skiplist.h db/skiplist.c</p>
 </blockquote>
 <h2>MaxLevel</h2>
-<div class="highlight"><pre>  <span class="k">enum</span> <span class="p">{</span> <span class="n">kMaxHeight</span> <span class="o">=</span> <span class="mi">12</span> <span class="p">};</span>
+<div class="highlight"><pre><span></span>  <span class="k">enum</span> <span class="p">{</span> <span class="n">kMaxHeight</span> <span class="o">=</span> <span class="mi">12</span> <span class="p">};</span>
 </pre></div>
 
 
 <p>可以看到，初始时，MaxLevel定义为12，但是Insert操作有可能会修改它。</p>
 <h2>节点定义</h2>
-<div class="highlight"><pre><span class="c1">// Implementation details follow</span>
+<div class="highlight"><pre><span></span><span class="c1">// Implementation details follow</span>
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="k">struct</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Node</span> <span class="p">{</span>
   <span class="n">explicit</span> <span class="n">Node</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">k</span><span class="p">)</span> <span class="o">:</span> <span class="n">key</span><span class="p">(</span><span class="n">k</span><span class="p">)</span> <span class="p">{</span> <span class="p">}</span>
@@ -182,7 +182,7 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
     <span class="n">next_</span><span class="p">[</span><span class="n">n</span><span class="p">].</span><span class="n">NoBarrier_Store</span><span class="p">(</span><span class="n">x</span><span class="p">);</span>
   <span class="p">}</span>
 
- <span class="nl">private:</span>
+ <span class="nl">private</span><span class="p">:</span>
   <span class="c1">// Array of length equal to the node height.  next_[0] is lowest level link.</span>
   <span class="n">port</span><span class="o">::</span><span class="n">AtomicPointer</span> <span class="n">next_</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span> <span class="c1">// 数组的长度就是该节点的高度，next_[0]是最底层的链表</span>
 <span class="p">};</span>
@@ -192,14 +192,14 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">NewNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">)</span> <span class="p">{</span>
   <span class="kt">char</span><span class="o">*</span> <span class="n">mem</span> <span class="o">=</span> <span class="n">arena_</span><span class="o">-&gt;</span><span class="n">AllocateAligned</span><span class="p">(</span>
       <span class="k">sizeof</span><span class="p">(</span><span class="n">Node</span><span class="p">)</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="n">port</span><span class="o">::</span><span class="n">AtomicPointer</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">));</span>
-  <span class="k">return</span> <span class="n">new</span> <span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
+  <span class="k">return</span> <span class="nf">new</span> <span class="p">(</span><span class="n">mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span>
 <span class="p">}</span>
 </pre></div>
 
 
 <p>创建节点时使用<code>Arena</code>分派空间。Arena是LevelDB中的内存池。next_[1]使用了<code>弹性指针</code>，可以根据Node的高度不同，申请不同的空间。</p>
 <p>目前还不清楚<code>弹性指针</code>相对于<code>指针变量</code>的优势是什么？ 个人觉得如果需要将变长数据拷贝到结构体中（深拷贝），使用弹性指针更方便。对比如下：</p>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
     <span class="kt">int</span> <span class="n">key</span><span class="p">;</span>
     <span class="kt">char</span> <span class="n">val</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
 <span class="p">}</span><span class="err">；</span>
@@ -212,13 +212,13 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 
 
 <p>在堆上分派Foo对象可以这么写，其中val部分可以是变长的。通过对比可以看出弹性指针在申请和释放时都要简便。</p>
-<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
 <span class="n">Foo</span> <span class="o">*</span><span class="n">f</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Foo</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">+</span> <span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">));</span>
 <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="p">);</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">name</span> <span class="o">=</span> <span class="s">&quot;hongjin&quot;</span><span class="p">;</span>
 <span class="n">Foo2</span> <span class="o">*</span><span class="n">f</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Foo2</span><span class="p">));</span>
 <span class="n">f</span><span class="o">-&gt;</span><span class="n">val</span> <span class="o">=</span> <span class="n">malloc</span><span class="p">(</span><span class="n">strlen</span><span class="p">(</span><span class="n">name</span><span class="p">));</span>
 <span class="n">free</span><span class="p">(</span><span class="n">f</span><span class="o">-&gt;</span><span class="n">val</span><span class="p">);</span>
@@ -227,7 +227,7 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 
 
 <h2>随机生成高度</h2>
-<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="kt">int</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">RandomHeight</span><span class="p">()</span> <span class="p">{</span>
   <span class="c1">// Increase height with probability 1 in kBranching</span>
   <span class="k">static</span> <span class="k">const</span> <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">kBranching</span> <span class="o">=</span> <span class="mi">4</span><span class="p">;</span>
@@ -247,7 +247,7 @@ kBranching及 (rnd_.Next() % kBranching。 这使得上层节点的数量约为�
 <p>返回第一个大于或等于该节点的位置。
 其中prev数组记录了在每一层中的前驱节点。
 prev数组的作用应该是方便后续的插入过程。这与单链表中的插入是一个道理。</p>
-<div class="highlight"><pre><span class="c1">// Return the earliest node that comes at or after key.</span>
+<div class="highlight"><pre><span></span><span class="c1">// Return the earliest node that comes at or after key.</span>
 <span class="c1">// Return NULL if there is no such node.</span>
 <span class="c1">//</span>
 <span class="c1">// If prev is non-NULL, fills prev[level] with pointer to previous</span>
@@ -277,8 +277,8 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 
 <p>还有一个判断是否包含某个元素的接口：</p>
-<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
   <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">))</span> <span class="p">{</span>
     <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
@@ -290,13 +290,13 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 
 <p>其中Equal调用的是创建SkipList传入的比较器</p>
-<div class="highlight"><pre>  <span class="n">bool</span> <span class="n">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
+<div class="highlight"><pre><span></span>  <span class="kt">bool</span> <span class="nf">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
 </pre></div>
 
 
 <h2>插入操作</h2>
 <p>插入过程与单链表冲插入过程一样，需要得到前驱节点。而前驱节点的信息是在查找过程中确定的，保存在了prev数组中。</p>
-<div class="highlight"><pre><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
+<div class="highlight"><pre><span></span><span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="kt">void</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Insert</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="p">{</span>
   <span class="c1">// TODO(opt): We can use a barrier-free variant of FindGreaterOrEqual()</span>
   <span class="c1">// here since Insert() is externally synchronized.</span>
@@ -337,13 +337,13 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 <h1>可供单独测试的代码</h1>
 <h2>C++</h2>
 <p>下面的代码是从LevelDB中抽离出来的，去掉了内存池arena的使用，去掉了并发控制、内存屏障等，存在的问题是动态申请的堆资源没有释放。不过不影响理解skiplist。</p>
-<div class="highlight"><pre><span class="nv">$ </span>g++ -Wall -O2 skiplist_test.cc -o <span class="nb">test</span>
+<div class="highlight"><pre><span></span>$ g++ -Wall -O2 skiplist_test.cc -o <span class="nb">test</span>
 </pre></div>
 
 
-<div class="highlight"><pre><span class="cp">// skiplist_test.cc</span>
-<span class="cp">#include &quot;skiplist.h&quot;</span>
-<span class="cp">#include &lt;set&gt;</span>
+<div class="highlight"><pre><span></span><span class="c1">// skiplist_test.cc</span>
+<span class="cp">#include</span> <span class="cpf">&quot;skiplist.h&quot;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;set&gt;</span><span class="cp"></span>
 
 <span class="cp">#define ASSERT_EQ(M,N) assert((M) == (N))</span>
 <span class="cp">#define ASSERT_TRUE(C) assert((C))</span>
@@ -366,7 +366,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 <span class="p">}</span> <span class="c1">// namespace jinger</span>
 
-<span class="cp">#include &lt;time.h&gt;</span>
+<span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
 <span class="n">using</span> <span class="n">namespace</span> <span class="n">jinger</span><span class="p">;</span>
 
 <span class="kt">int</span> <span class="nf">main</span><span class="p">(</span><span class="kt">int</span> <span class="n">argc</span><span class="p">,</span> <span class="kt">char</span><span class="o">**</span> <span class="n">argv</span><span class="p">)</span> <span class="p">{</span>
@@ -395,23 +395,23 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 </pre></div>
 
 
-<div class="highlight"><pre><span class="cp">// skiplist.h</span>
+<div class="highlight"><pre><span></span><span class="c1">// skiplist.h</span>
 <span class="cp">#ifndef STORAGE_JINGER_SKIPLIST_H_</span>
 <span class="cp">#define STORAGE_JINGER_SKIPLIST_H_</span>
 
-<span class="cp">#include &lt;assert.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;stdint.h&gt;</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
+<span class="cp">#include</span> <span class="cpf">&lt;assert.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdint.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
 
 <span class="n">namespace</span> <span class="n">jinger</span><span class="p">{</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
 <span class="n">class</span> <span class="n">SkipList</span> <span class="p">{</span>
- <span class="nl">private:</span>
+ <span class="nl">private</span><span class="p">:</span>
   <span class="k">struct</span> <span class="n">Node</span><span class="p">;</span>
 
- <span class="nl">public:</span>
+ <span class="nl">public</span><span class="p">:</span>
   <span class="c1">// Create a new SkipList object that will use &quot;cmp&quot; for comparing keys,</span>
   <span class="c1">// and will allocate memory using &quot;*arena&quot;.  Objects allocated in the arena</span>
   <span class="c1">// must remain allocated for the lifetime of the skiplist object.</span>
@@ -419,20 +419,20 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
   <span class="c1">// Insert key into the list.</span>
   <span class="c1">// REQUIRES: nothing that compares equal to key is currently in the list.</span>
-  <span class="kt">void</span> <span class="n">Insert</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">Insert</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">);</span>
 
   <span class="c1">// Returns true iff an entry that compares equal to key is in the list.</span>
-  <span class="n">bool</span> <span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="nf">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Iteration over the contents of a skip list</span>
   <span class="n">class</span> <span class="n">Iterator</span> <span class="p">{</span>
-   <span class="nl">public:</span>
+   <span class="nl">public</span><span class="p">:</span>
     <span class="c1">// Initialize an iterator over the specified list.</span>
     <span class="c1">// The returned iterator is not valid.</span>
     <span class="n">explicit</span> <span class="n">Iterator</span><span class="p">(</span><span class="k">const</span> <span class="n">SkipList</span><span class="o">*</span> <span class="n">list</span><span class="p">);</span>
 
     <span class="c1">// Returns true iff the iterator is positioned at a valid node.</span>
-    <span class="n">bool</span> <span class="n">Valid</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+    <span class="kt">bool</span> <span class="nf">Valid</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
 
     <span class="c1">// Returns the key at the current position.</span>
     <span class="c1">// REQUIRES: Valid()</span>
@@ -440,30 +440,30 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
     <span class="c1">// Advances to the next position.</span>
     <span class="c1">// REQUIRES: Valid()</span>
-    <span class="kt">void</span> <span class="n">Next</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="nf">Next</span><span class="p">();</span>
 
     <span class="c1">// Advances to the previous position.</span>
     <span class="c1">// REQUIRES: Valid()</span>
-    <span class="kt">void</span> <span class="n">Prev</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="nf">Prev</span><span class="p">();</span>
 
     <span class="c1">// Advance to the first entry with a key &gt;= target</span>
-    <span class="kt">void</span> <span class="n">Seek</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">target</span><span class="p">);</span>
+    <span class="kt">void</span> <span class="nf">Seek</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">target</span><span class="p">);</span>
 
     <span class="c1">// Position at the first entry in list.</span>
     <span class="c1">// Final state of iterator is Valid() iff list is not empty.</span>
-    <span class="kt">void</span> <span class="n">SeekToFirst</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="nf">SeekToFirst</span><span class="p">();</span>
 
     <span class="c1">// Position at the last entry in list.</span>
     <span class="c1">// Final state of iterator is Valid() iff list is not empty.</span>
-    <span class="kt">void</span> <span class="n">SeekToLast</span><span class="p">();</span>
+    <span class="kt">void</span> <span class="nf">SeekToLast</span><span class="p">();</span>
 
-   <span class="nl">private:</span>
+   <span class="nl">private</span><span class="p">:</span>
     <span class="k">const</span> <span class="n">SkipList</span><span class="o">*</span> <span class="n">list_</span><span class="p">;</span>
     <span class="n">Node</span><span class="o">*</span> <span class="n">node_</span><span class="p">;</span>
     <span class="c1">// Intentionally copyable</span>
   <span class="p">};</span>
 
- <span class="nl">private:</span>
+ <span class="nl">private</span><span class="p">:</span>
   <span class="k">enum</span> <span class="p">{</span> <span class="n">kMaxHeight</span> <span class="o">=</span> <span class="mi">12</span> <span class="p">};</span>
 
   <span class="c1">// Immutable after construction</span>
@@ -473,31 +473,31 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
   <span class="kt">uint32_t</span> <span class="n">max_height_</span><span class="p">;</span>   <span class="c1">// Height of the entire list</span>
 
-  <span class="kr">inline</span> <span class="kt">int</span> <span class="n">GetMaxHeight</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+  <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">GetMaxHeight</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
     <span class="k">return</span> <span class="n">max_height_</span><span class="p">;</span>
   <span class="p">}</span>
 
-  <span class="n">Node</span><span class="o">*</span> <span class="n">NewNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">);</span>
-  <span class="kt">int</span> <span class="n">RandomHeight</span><span class="p">();</span>
-  <span class="n">bool</span> <span class="n">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="nf">NewNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="kt">int</span> <span class="n">height</span><span class="p">);</span>
+  <span class="kt">int</span> <span class="nf">RandomHeight</span><span class="p">();</span>
+  <span class="kt">bool</span> <span class="nf">Equal</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">a</span><span class="p">,</span> <span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">b</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">);</span> <span class="p">}</span>
 
   <span class="c1">// Return true if key is greater than the data stored in &quot;n&quot;</span>
-  <span class="n">bool</span> <span class="n">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="nf">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Return the earliest node that comes at or after key.</span>
   <span class="c1">// Return NULL if there is no such node.</span>
   <span class="c1">//</span>
   <span class="c1">// If prev is non-NULL, fills prev[level] with pointer to previous</span>
   <span class="c1">// node at &quot;level&quot; for every level in [0..max_height_-1].</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">**</span> <span class="n">prev</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="nf">FindGreaterOrEqual</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">**</span> <span class="n">prev</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Return the latest node with a key &lt; key.</span>
   <span class="c1">// Return head_ if there is no such node.</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="n">FindLessThan</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="nf">FindLessThan</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// Return the last node in the list.</span>
   <span class="c1">// Return head_ if list is empty.</span>
-  <span class="n">Node</span><span class="o">*</span> <span class="n">FindLast</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
+  <span class="n">Node</span><span class="o">*</span> <span class="nf">FindLast</span><span class="p">()</span> <span class="k">const</span><span class="p">;</span>
 
   <span class="c1">// No copying allowed</span>
   <span class="n">SkipList</span><span class="p">(</span><span class="k">const</span> <span class="n">SkipList</span><span class="o">&amp;</span><span class="p">);</span>
@@ -538,7 +538,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
   <span class="c1">//  next_[n].NoBarrier_Store(x);</span>
   <span class="c1">//}</span>
 
- <span class="nl">private:</span>
+ <span class="nl">private</span><span class="p">:</span>
   <span class="c1">// Array of length equal to the node height.  next_[0] is lowest level link.</span>
   <span class="c1">//port::AtomicPointer next_[1];</span>
   <span class="kt">void</span><span class="o">*</span> <span class="n">next_</span><span class="p">[</span><span class="mi">1</span><span class="p">];</span>
@@ -553,7 +553,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
   <span class="c1">//</span>
 
   <span class="kt">char</span><span class="o">*</span> <span class="n">new_mem</span> <span class="o">=</span> <span class="n">new</span> <span class="kt">char</span><span class="p">[</span><span class="k">sizeof</span><span class="p">(</span><span class="n">Node</span><span class="p">)</span> <span class="o">+</span> <span class="k">sizeof</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">height</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)];</span>
-  <span class="k">return</span> <span class="n">new</span> <span class="p">(</span><span class="n">new_mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span> <span class="c1">// 使用自己分配的内存空间上调用构造函数,没有考虑资源的释放，资源泄露</span>
+  <span class="k">return</span> <span class="nf">new</span> <span class="p">(</span><span class="n">new_mem</span><span class="p">)</span> <span class="n">Node</span><span class="p">(</span><span class="n">key</span><span class="p">);</span> <span class="c1">// 使用自己分配的内存空间上调用构造函数,没有考虑资源的释放，资源泄露</span>
 
   <span class="c1">//return static_cast&lt;Node*&gt;(malloc(sizeof(Node) + sizeof(void*) * (height - 1))); // 没有调用构造函数，malloc只分配空间，不会调用构造函数。而new会调用构造函数</span>
 <span class="p">}</span>
@@ -565,7 +565,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 <span class="p">}</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="kr">inline</span> <span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Iterator</span><span class="o">::</span><span class="n">Valid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
+<span class="kr">inline</span> <span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Iterator</span><span class="o">::</span><span class="n">Valid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span>
   <span class="k">return</span> <span class="n">node_</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">;</span>
 <span class="p">}</span>
 
@@ -625,7 +625,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 <span class="p">}</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">KeyIsAfterNode</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">,</span> <span class="n">Node</span><span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
   <span class="c1">// NULL n is considered infinite</span>
   <span class="k">return</span> <span class="p">(</span><span class="n">n</span> <span class="o">!=</span> <span class="nb">NULL</span><span class="p">)</span> <span class="o">&amp;&amp;</span> <span class="p">(</span><span class="n">compare_</span><span class="p">(</span><span class="n">n</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">,</span> <span class="n">key</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">);</span>
 <span class="p">}</span>
@@ -743,7 +743,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 <span class="p">}</span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">Key</span><span class="p">,</span> <span class="n">class</span> <span class="n">Comparator</span><span class="o">&gt;</span>
-<span class="n">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
+<span class="kt">bool</span> <span class="n">SkipList</span><span class="o">&lt;</span><span class="n">Key</span><span class="p">,</span><span class="n">Comparator</span><span class="o">&gt;::</span><span class="n">Contains</span><span class="p">(</span><span class="k">const</span> <span class="n">Key</span><span class="o">&amp;</span> <span class="n">key</span><span class="p">)</span> <span class="k">const</span> <span class="p">{</span>
   <span class="n">Node</span><span class="o">*</span> <span class="n">x</span> <span class="o">=</span> <span class="n">FindGreaterOrEqual</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">);</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">x</span> <span class="o">!=</span> <span class="nb">NULL</span> <span class="o">&amp;&amp;</span> <span class="n">Equal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">x</span><span class="o">-&gt;</span><span class="n">key</span><span class="p">))</span> <span class="p">{</span>
     <span class="k">return</span> <span class="nb">true</span><span class="p">;</span>
@@ -760,16 +760,16 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 
 <h2>c</h2>
 <p>c语言版本大体上是对c++版本的“翻译”</p>
-<div class="highlight"><pre><span class="nv">$gcc</span> skiplist.c -o sl
+<div class="highlight"><pre><span></span><span class="nv">$gcc</span> skiplist.c -o sl
 </pre></div>
 
 
-<div class="highlight"><pre><span class="cp">// skiplist.c</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;stdint.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;assert.h&gt;</span>
-<span class="cp">#include &lt;time.h&gt;</span>
+<div class="highlight"><pre><span></span><span class="c1">// skiplist.c</span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdint.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;assert.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;time.h&gt;</span><span class="cp"></span>
 
 <span class="k">typedef</span> <span class="kt">uint32_t</span> <span class="n">Key</span><span class="p">;</span>
 
@@ -907,78 +907,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
     <span class="k">return</span> <span class="mi">0</span><span class="p">;</span>
 <span class="p">}</span>
 </pre></div>
-
-
-<script type="text/javascript">if (!document.getElementById('mathjaxscript_pelican_#%@#$@#')) {
-    var align = "center",
-        indent = "0em",
-        linebreak = "false";
-
-    if (false) {
-        align = (screen.width < 768) ? "left" : align;
-        indent = (screen.width < 768) ? "0em" : indent;
-        linebreak = (screen.width < 768) ? 'true' : linebreak;
-    }
-
-    var mathjaxscript = document.createElement('script');
-    var location_protocol = (false) ? 'https' : document.location.protocol;
-    if (location_protocol !== 'http' && location_protocol !== 'https') location_protocol = 'https:';
-    mathjaxscript.id = 'mathjaxscript_pelican_#%@#$@#';
-    mathjaxscript.type = 'text/javascript';
-    mathjaxscript.src = location_protocol + '//cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML';
-    mathjaxscript[(window.opera ? "innerHTML" : "text")] =
-        "MathJax.Hub.Config({" +
-        "    config: ['MMLorHTML.js']," +
-        "    TeX: { extensions: ['AMSmath.js','AMSsymbols.js','noErrors.js','noUndefined.js'], equationNumbers: { autoNumber: 'AMS' } }," +
-        "    jax: ['input/TeX','input/MathML','output/HTML-CSS']," +
-        "    extensions: ['tex2jax.js','mml2jax.js','MathMenu.js','MathZoom.js']," +
-        "    displayAlign: '"+ align +"'," +
-        "    displayIndent: '"+ indent +"'," +
-        "    showMathMenu: true," +
-        "    messageStyle: 'normal'," +
-        "    tex2jax: { " +
-        "        inlineMath: [ ['\\\\(','\\\\)'] ], " +
-        "        displayMath: [ ['$$','$$'] ]," +
-        "        processEscapes: true," +
-        "        preview: 'TeX'," +
-        "    }, " +
-        "    'HTML-CSS': { " +
-        "        styles: { '.MathJax_Display, .MathJax .mo, .MathJax .mi, .MathJax .mn': {color: 'inherit ! important'} }," +
-        "        linebreaks: { automatic: "+ linebreak +", width: '90% container' }," +
-        "    }, " +
-        "}); " +
-        "if ('default' !== 'default') {" +
-            "MathJax.Hub.Register.StartupHook('HTML-CSS Jax Ready',function () {" +
-                "var VARIANT = MathJax.OutputJax['HTML-CSS'].FONTDATA.VARIANT;" +
-                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
-                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
-                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
-                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
-            "});" +
-            "MathJax.Hub.Register.StartupHook('SVG Jax Ready',function () {" +
-                "var VARIANT = MathJax.OutputJax.SVG.FONTDATA.VARIANT;" +
-                "VARIANT['normal'].fonts.unshift('MathJax_default');" +
-                "VARIANT['bold'].fonts.unshift('MathJax_default-bold');" +
-                "VARIANT['italic'].fonts.unshift('MathJax_default-italic');" +
-                "VARIANT['-tex-mathit'].fonts.unshift('MathJax_default-italic');" +
-            "});" +
-        "}";
-    (document.body || document.getElementsByTagName('head')[0]).appendChild(mathjaxscript);
-}
-</script>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "leveldb-skiplist.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -998,12 +927,10 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -1042,6 +969,7 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -1054,15 +982,6 @@ prev数组的作用应该是方便后续的插入过程。这与单链表中的�
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

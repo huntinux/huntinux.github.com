@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-08-10T11:00:00+08:00">
-                Wed 10 August 2016
+                三 10 八月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -84,14 +84,14 @@
 <p>TODO: 总结<a href="https://en.wikipedia.org/wiki/Reactor_pattern">Reactor</a></p>
 <p>muduo也是基于Reactor模型的.</p>
 <h1>muduo 的Reactor</h1>
-<p><img alt="这里写图片描述" src="https://lh3.googleusercontent.com/LS86ZKntcADnDQdezB-26s0kBTn34LgFWwgsaP77BEKZwUBLqOoAZT6yRrjFcBsrMR9hjV-N8nhZ7qvWYNI3zJ3Ofe9yGIGdz8kwDkGBjCc3RCdNh_QqAICu0b7qETT7sgGzOqRLaPci7H1SAT7jsJVhdXsASJoqayHjAk5_lK2ZBQQt31rfZpUms7J5DcODEIwvg7teog10colnwKkT0vRSTtJD54pXimYvbi0fB0qrElyTepiz90Ox9o6esof4eIn1hHvOqtQMX4l84tL5EhH-vN3fmmHl5GhD1wdKAKVlPmDnJblPe6JtDE9fGFHTzDWKhKtllzpAjlsMIi2hVlpNyfXfUcH3S-94bG5SPoNBvNigv9sQVD7xaCOlxPZ2UeNvv-gXiGmGgadmixo0kZdcTYmtlFDcbEJC-1DHQx4v_yTHU5IzRP44JNyMfqRK5_0-q5Oe2H2J7WIhvawtm1K3EWFmnQNUErtU6L7ULQXTiCB-AcomI6h5RfeqsqSxAPaoqGoAJO8jhrxrf7-asqBfHJYtR40dpmnW8vSCOkaNxBCVrlUvqtNF0KM84oPt73g1BkMnCgzK69ATR63KgNhDbAFtzQ=w944-h576-no" /></p>
+<p><img alt="这里写图片描述" src="https://lh3.googleusercontent.com/LS86ZKntcADnDQdezB-26s0kBTn34LgFWwgsaP77BEKZwUBLqOoAZT6yRrjFcBsrMR9hjV-N8nhZ7qvWYNI3zJ3Ofe9yGIGdz8kwDkGBjCc3RCdNh_QqAICu0b7qETT7sgGzOqRLaPci7H1SAT7jsJVhdXsASJoqayHjAk5_lK2ZBQQt31rfZpUms7J5DcODEIwvg7teog10colnwKkT0vRSTtJD54pXimYvbi0fB0qrElyTepiz90Ox9o6esof4eIn1hHvOqtQMX4l84tL5EhH-vN3fmmHl5GhD1wdKAKVlPmDnJblPe6JtDE9fGFHTzDWKhKtllzpAjlsMIi2hVlpNyfXfUcH3S-94bG5SPoNBvNigv9sQVD7xaCOlxPZ2UeNvv-gXiGmGgadmixo0kZdcTYmtlFDcbEJC-1DHQx4v_yTHU5IzRP44JNyMfqRK5_0-q5Oe2H2J7WIhvawtm1K3EWFmnQNUErtU6L7ULQXTiCB-AcomI6h5RfeqsqSxAPaoqGoAJO8jhrxrf7-asqBfHJYtR40dpmnW8vSCOkaNxBCVrlUvqtNF0KM84oPt73g1BkMnCgzK69ATR63KgNhDbAFtzQ=w944-h576-no"></p>
 <h1>EventLoop</h1>
 <p>为了保证每个线程只有一个EventLoop，EventLoop会记录创建它的线程ID，并且使用<code>__thread</code>（TLS线程局部存储）来记录当前线程创建的EventLoop对象的指针。当某线程创建了超过一个EventLoop时,就结束程序。这样就能保证一个线程只有一个EventLoop,即<code>one loop per thread</code></p>
 <p>EventLoop会进行事件循环，使用某种IO Multiplexing技术（select、poll、epoll）监听关心的文件描述符fds是否发生了关注的事件，然后调用相应的handler。因此线程会阻塞在此，当然也可以设置超时时间。 为了能及时唤醒该线程，可以让EventLoop自身也有一个fd，关注它的readable事件，想将EventLoop所在线程唤醒时，只需要向该fd进行写操作即可。</p>
 <p>EventLoop的生命周期与所在线程相同，不必是heap上的。此外，将拥有EventLoop的线程称为<code>IO线程</code>，应为该线程只关心socket fd上的IO。其他线程可以称为‘工作线程’，负责业务逻辑。</p>
 <p><code>activeChannels_</code>用来存放发生了事件的Channel的集合，通过poller来获得（poller负责设置Channel发生了什么事件）。然后调用每个Channel的<code>handleEvent</code>来处理发生的事件，<code>handleEvent</code>根据poller设置的发生事件，调用想用的处理函数。</p>
 <p>最主要的事件循环就是这样的：</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">EventLoop</span><span class="o">::</span><span class="n">loop</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">EventLoop</span><span class="o">::</span><span class="n">loop</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="c1">// ...</span>
   <span class="k">while</span> <span class="p">(</span><span class="o">!</span><span class="n">quit_</span><span class="p">)</span>
@@ -122,7 +122,7 @@
 <p>每个Channel只负责一个文件描述符fd的IO事件分发，但它不拥有这个fd，也不在析构时关闭该fd。Channel会把不同的IO事件分发给不同的回调函数，如ReadCallback、WriteCallback。</p>
 <p>每个Channel自始至终只属于一个EventLoop，所以每个Channel只属于一个<code>IO线程</code></p>
 <p>Channel处理事件（其中revents_代表事件类型，由poller负责填写）：</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">Channel</span><span class="o">::</span><span class="n">handleEvent</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">Channel</span><span class="o">::</span><span class="n">handleEvent</span><span class="p">(</span><span class="n">Timestamp</span> <span class="n">receiveTime</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">eventHandling_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
   <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="n">reventsToString</span><span class="p">();</span>
@@ -160,7 +160,7 @@
 <h1>Poller</h1>
 <p>Poller是对IO Multiplexing的封装（可用select、poll、epoll），它属于某个EventLoop，生命周期与EventLoop相同，使用时无需加锁。Poller并不拥有Channel，只是持有Channel的裸指针（<code>map&lt;int,Channel*&gt;</code>,一个fd对应一个channel），因此Channel在析构之前，需要自己unregister，即调用<code>EventLoop::removeChannel---&gt;Poller::removeChannel</code>，将自己从Poller的channels中删除，避免空悬指针。</p>
 <p>EPollPoller继承了Poller，主要的事件轮询poll实现如下，通过<code>epoll_wait</code>获取就绪的channel，放到activeChannels中，供EventLoop使用。</p>
-<div class="highlight"><pre><span class="n">Timestamp</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">poll</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMs</span><span class="p">,</span> <span class="n">ChannelList</span><span class="o">*</span> <span class="n">activeChannels</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="n">Timestamp</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">poll</span><span class="p">(</span><span class="kt">int</span> <span class="n">timeoutMs</span><span class="p">,</span> <span class="n">ChannelList</span><span class="o">*</span> <span class="n">activeChannels</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">LOG_TRACE</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;fd total count &quot;</span> <span class="o">&lt;&lt;</span> <span class="n">channels_</span><span class="p">.</span><span class="n">size</span><span class="p">();</span> <span class="c1">// channels是一个map&lt;fd, Channel*&gt;,保存了fd对应的channel</span>
 
@@ -209,7 +209,7 @@
 
 
 <p>channel注册事件通过<code>Poller::updateChannel</code>实现。其中channel有几个状态<code>kNew、kDeleted、kAdded</code>，分别表示<code>新的、已删除、已被添加到Poller</code>。在updateChannel时会根据Channel的状态执行不同的操作。可以看到底层操作使用的是<code>epoll_ctl</code></p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">updateChannel</span><span class="p">(</span><span class="n">Channel</span><span class="o">*</span> <span class="n">channel</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">EPollPoller</span><span class="o">::</span><span class="n">updateChannel</span><span class="p">(</span><span class="n">Channel</span><span class="o">*</span> <span class="n">channel</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">const</span> <span class="kt">int</span> <span class="n">index</span> <span class="o">=</span> <span class="n">channel</span><span class="o">-&gt;</span><span class="n">index</span><span class="p">();</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">index</span> <span class="o">==</span> <span class="n">kNew</span> <span class="o">||</span> <span class="n">index</span> <span class="o">==</span> <span class="n">kDeleted</span><span class="p">)</span>
@@ -277,7 +277,7 @@
 <p>可以看到<code>epoll_event.data.ptr</code>存放的是Channel的指针，这样在相应的fd变得active时，可以从<code>epoll_event.data.ptr</code>找到对应的Channel。可以看到指针的重要性，它连接了“两个世界”。</p>
 <h1>Example</h1>
 <p>这是书上的使用示例，展示了EventLoop、Channel、Poller的使用方法：</p>
-<div class="highlight"><pre><span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">g_loop</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><span class="n">muduo</span><span class="o">::</span><span class="n">net</span><span class="o">::</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">g_loop</span><span class="p">;</span>
 
 <span class="kt">void</span> <span class="nf">timeout</span><span class="p">()</span>
 <span class="p">{</span>
@@ -324,18 +324,6 @@
 <p>https://github.com/huntinux/muduo-learn/tree/v0.1</p>
 </blockquote>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-reactoreventloop-channel-poller.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -355,12 +343,10 @@
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -399,6 +385,7 @@
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -411,15 +398,6 @@
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

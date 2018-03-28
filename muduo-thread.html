@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-07-23T09:00:00+08:00">
-                Sat 23 July 2016
+                六 23 七月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -74,13 +74,13 @@
 <p>获取线程id需要进行一次系统调用，为了降低开销，会将第一次获取的线程id保存到线程局部存储中。即<code>t_cachedTid</code>。</p>
 <p>看过内核代码或LDD的同学应该记得<a href="https://kernelnewbies.org/FAQ/LikelyUnlikely">likely()/unlikely()</a>。这两个函数是对编译器的提示，告诉编译器哪个分支最有可能为真，编译器因此能正确优化分支转移，提高代码效率。
 定义在<code>include/linux/compiler.h</code>  :</p>
-<div class="highlight"><pre><span class="cp">#define likely(x)       __builtin_expect(!!(x), 1)</span>
+<div class="highlight"><pre><span></span><span class="cp">#define likely(x)       __builtin_expect(!!(x), 1)</span>
 <span class="cp">#define unlikely(x)     __builtin_expect(!!(x), 0)</span>
 </pre></div>
 
 
 <p>知道这一点理解tid()就很容易了。</p>
-<div class="highlight"><pre><span class="c1">// CurrentThread.h</span>
+<div class="highlight"><pre><span></span><span class="c1">// CurrentThread.h</span>
 
 <span class="n">namespace</span> <span class="n">CurrentThread</span>
 <span class="p">{</span>
@@ -88,10 +88,10 @@
   <span class="n">__thread</span> <span class="kt">char</span> <span class="n">t_tidString</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
   <span class="n">__thread</span> <span class="kt">int</span> <span class="n">t_tidStringLength</span> <span class="o">=</span> <span class="mi">6</span><span class="p">;</span>
   <span class="n">__thread</span> <span class="k">const</span> <span class="kt">char</span><span class="o">*</span> <span class="n">t_threadName</span> <span class="o">=</span> <span class="s">&quot;unknown&quot;</span><span class="p">;</span>
-  <span class="k">const</span> <span class="n">bool</span> <span class="n">sameType</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="n">pid_t</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
+  <span class="k">const</span> <span class="kt">bool</span> <span class="n">sameType</span> <span class="o">=</span> <span class="n">boost</span><span class="o">::</span><span class="n">is_same</span><span class="o">&lt;</span><span class="kt">int</span><span class="p">,</span> <span class="kt">pid_t</span><span class="o">&gt;::</span><span class="n">value</span><span class="p">;</span>
   <span class="n">BOOST_STATIC_ASSERT</span><span class="p">(</span><span class="n">sameType</span><span class="p">);</span> <span class="c1">// 保证int和pid_t是相同的类型</span>
 
-  <span class="kt">void</span> <span class="n">cacheTid</span><span class="p">();</span>
+  <span class="kt">void</span> <span class="nf">cacheTid</span><span class="p">();</span>
 
   <span class="kr">inline</span> <span class="kt">int</span> <span class="nf">tid</span><span class="p">()</span>
   <span class="p">{</span>
@@ -117,16 +117,16 @@
     <span class="k">return</span> <span class="n">t_threadName</span><span class="p">;</span>
   <span class="p">}</span>
 
-  <span class="n">bool</span> <span class="n">isMainThread</span><span class="p">();</span>
+  <span class="kt">bool</span> <span class="nf">isMainThread</span><span class="p">();</span>
 
-  <span class="kt">void</span> <span class="n">sleepUsec</span><span class="p">(</span><span class="kt">int64_t</span> <span class="n">usec</span><span class="p">);</span>
+  <span class="kt">void</span> <span class="nf">sleepUsec</span><span class="p">(</span><span class="kt">int64_t</span> <span class="n">usec</span><span class="p">);</span>
 <span class="p">}</span>
 <span class="p">}</span>
 </pre></div>
 
 
 <p>cacheTid()的定义：</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">cacheTid</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">cacheTid</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">t_cachedTid</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
   <span class="p">{</span>
@@ -134,16 +134,16 @@
     <span class="n">t_tidStringLength</span> <span class="o">=</span> <span class="n">snprintf</span><span class="p">(</span><span class="n">t_tidString</span><span class="p">,</span> <span class="k">sizeof</span> <span class="n">t_tidString</span><span class="p">,</span> <span class="s">&quot;%5d &quot;</span><span class="p">,</span> <span class="n">t_cachedTid</span><span class="p">);</span>
   <span class="p">}</span>
 <span class="p">}</span>
-<span class="n">pid_t</span> <span class="n">detail</span><span class="o">::</span><span class="n">gettid</span><span class="p">()</span>
+<span class="kt">pid_t</span> <span class="n">detail</span><span class="o">::</span><span class="n">gettid</span><span class="p">()</span>
 <span class="p">{</span>
-  <span class="k">return</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span><span class="p">(</span><span class="o">::</span><span class="n">syscall</span><span class="p">(</span><span class="n">SYS_gettid</span><span class="p">));</span> <span class="c1">// 系统调用，获取tid</span>
+  <span class="k">return</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="kt">pid_t</span><span class="o">&gt;</span><span class="p">(</span><span class="o">::</span><span class="n">syscall</span><span class="p">(</span><span class="n">SYS_gettid</span><span class="p">));</span> <span class="c1">// 系统调用，获取tid</span>
 <span class="p">}</span>
 </pre></div>
 
 
 <p>这里是通过系统调用<code>syscall(SYS_gettid)</code>获取线程id。这与使用<code>pthread_self</code>的返回值是不同的。这篇<a href="http://blog.csdn.net/delphiwcdj/article/details/8476547">文章</a>有分析。</p>
 <h1>ThreadNameInitializer</h1>
-<div class="highlight"><pre><span class="kt">void</span> <span class="nf">afterFork</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">afterFork</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">muduo</span><span class="o">::</span><span class="n">CurrentThread</span><span class="o">::</span><span class="n">t_cachedTid</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
   <span class="n">muduo</span><span class="o">::</span><span class="n">CurrentThread</span><span class="o">::</span><span class="n">t_threadName</span> <span class="o">=</span> <span class="s">&quot;main&quot;</span><span class="p">;</span>
@@ -153,7 +153,7 @@
 
 <span class="n">class</span> <span class="n">ThreadNameInitializer</span>
 <span class="p">{</span>
- <span class="nl">public:</span>
+ <span class="nl">public</span><span class="p">:</span>
   <span class="n">ThreadNameInitializer</span><span class="p">()</span>
   <span class="p">{</span>
     <span class="n">muduo</span><span class="o">::</span><span class="n">CurrentThread</span><span class="o">::</span><span class="n">t_threadName</span> <span class="o">=</span> <span class="s">&quot;main&quot;</span><span class="p">;</span>
@@ -171,34 +171,34 @@
 </blockquote>
 <p>ThreadNameInitializer进行主线程初始化操作（利用全局变量）：包括设置默认的线程name、缓存线程id。如果进行了fork，那么在子进程中运行<code>afterFork</code>函数进行同样的初始化工作。</p>
 <h1>Thread</h1>
-<div class="highlight"><pre><span class="n">class</span> <span class="n">Thread</span> <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span> <span class="c1">// 不允许复制</span>
+<div class="highlight"><pre><span></span><span class="n">class</span> <span class="nl">Thread</span> <span class="p">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span> <span class="c1">// 不允许复制</span>
 <span class="p">{</span>
- <span class="nl">public:</span>
+ <span class="nl">public</span><span class="p">:</span>
   <span class="k">typedef</span> <span class="n">boost</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span> <span class="p">()</span><span class="o">&gt;</span> <span class="n">ThreadFunc</span><span class="p">;</span>
 
-  <span class="n">explicit</span> <span class="n">Thread</span><span class="p">(</span><span class="k">const</span> <span class="n">ThreadFunc</span><span class="o">&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">string</span><span class="p">());</span> <span class="c1">// 必须显示调用</span>
+  <span class="n">explicit</span> <span class="nf">Thread</span><span class="p">(</span><span class="k">const</span> <span class="n">ThreadFunc</span><span class="o">&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">string</span><span class="p">());</span> <span class="c1">// 必须显示调用</span>
 <span class="cp">#ifdef __GXX_EXPERIMENTAL_CXX0X__</span>
-  <span class="n">explicit</span> <span class="n">Thread</span><span class="p">(</span><span class="n">ThreadFunc</span><span class="o">&amp;&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">string</span><span class="p">());</span>
+  <span class="n">explicit</span> <span class="nf">Thread</span><span class="p">(</span><span class="n">ThreadFunc</span><span class="o">&amp;&amp;</span><span class="p">,</span> <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span> <span class="o">=</span> <span class="n">string</span><span class="p">());</span>
 <span class="cp">#endif</span>
   <span class="o">~</span><span class="n">Thread</span><span class="p">();</span>
 
-  <span class="kt">void</span> <span class="n">start</span><span class="p">();</span> <span class="c1">// 启动线程</span>
-  <span class="kt">int</span> <span class="n">join</span><span class="p">();</span> <span class="c1">// return pthread_join()</span>
+  <span class="kt">void</span> <span class="nf">start</span><span class="p">();</span> <span class="c1">// 启动线程</span>
+  <span class="kt">int</span> <span class="nf">join</span><span class="p">();</span> <span class="c1">// return pthread_join()</span>
 
-  <span class="n">bool</span> <span class="n">started</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">started_</span><span class="p">;</span> <span class="p">}</span>
+  <span class="kt">bool</span> <span class="nf">started</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">started_</span><span class="p">;</span> <span class="p">}</span>
   <span class="c1">// pthread_t pthreadId() const { return pthreadId_; }</span>
-  <span class="n">pid_t</span> <span class="n">tid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="o">*</span><span class="n">tid_</span><span class="p">;</span> <span class="p">}</span>
+  <span class="kt">pid_t</span> <span class="nf">tid</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="o">*</span><span class="n">tid_</span><span class="p">;</span> <span class="p">}</span>
   <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">()</span> <span class="k">const</span> <span class="p">{</span> <span class="k">return</span> <span class="n">name_</span><span class="p">;</span> <span class="p">}</span>
 
   <span class="k">static</span> <span class="kt">int</span> <span class="n">numCreated</span><span class="p">()</span> <span class="p">{</span> <span class="k">return</span> <span class="n">numCreated_</span><span class="p">.</span><span class="n">get</span><span class="p">();</span> <span class="p">}</span>
 
- <span class="nl">private:</span>
+ <span class="nl">private</span><span class="p">:</span>
   <span class="kt">void</span> <span class="n">setDefaultName</span><span class="p">();</span>
 
-  <span class="n">bool</span>       <span class="n">started_</span><span class="p">;</span>
-  <span class="n">bool</span>       <span class="n">joined_</span><span class="p">;</span>
+  <span class="kt">bool</span>       <span class="n">started_</span><span class="p">;</span>
+  <span class="kt">bool</span>       <span class="n">joined_</span><span class="p">;</span>
   <span class="n">pthread_t</span>  <span class="n">pthreadId_</span><span class="p">;</span>
-  <span class="n">boost</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">tid_</span><span class="p">;</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">pid_t</span><span class="o">&gt;</span> <span class="n">tid_</span><span class="p">;</span>
   <span class="n">ThreadFunc</span> <span class="n">func_</span><span class="p">;</span>
   <span class="n">string</span>     <span class="n">name_</span><span class="p">;</span>
 
@@ -209,22 +209,22 @@
 
 <p>Thread即有<code>pthread_t</code>也有<code>pid_t</code>，它们各有用处，<code>pthread_t</code>给pthread_XXX函数使用，而<code>pid_t</code>作为线程标识。（疑问：直接使用pthread_t作为线程标识不行吗？）</p>
 <p>线程的默认name与它是第几个线程相关，std::string 没有format，那么格式化可以使用snprintf，或者使用ostringstream，或者boost::format也是可以的。</p>
-<div class="highlight"><pre><span class="n">void</span> <span class="nn">Thread::</span><span class="n">setDefaultName</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="nt">void</span> <span class="nt">Thread</span><span class="p">::</span><span class="nd">setDefaultName</span><span class="o">()</span>
 <span class="p">{</span>
-  <span class="nb">int</span> <span class="n">num</span> <span class="o">=</span> <span class="n">numCreated_</span><span class="o">.</span><span class="n">incrementAndGet</span><span class="p">();</span>
-  <span class="k">if</span> <span class="p">(</span><span class="n">name_</span><span class="o">.</span><span class="n">empty</span><span class="p">())</span>
-  <span class="p">{</span>
-    <span class="n">char</span> <span class="n">buf</span><span class="p">[</span><span class="mi">32</span><span class="p">];</span>
-    <span class="n">snprintf</span><span class="p">(</span><span class="n">buf</span><span class="p">,</span> <span class="n">sizeof</span> <span class="n">buf</span><span class="p">,</span> <span class="s">&quot;Thread%d&quot;</span><span class="p">,</span> <span class="n">num</span><span class="p">);</span>
-    <span class="n">name_</span> <span class="o">=</span> <span class="n">buf</span><span class="p">;</span>
-    <span class="sr">//</span><span class="n">name_</span> <span class="o">=</span> <span class="n">str</span><span class="p">(</span><span class="nn">boost::</span><span class="n">format</span><span class="p">(</span><span class="s">&quot;Thread%1%&quot;</span><span class="p">)</span> <span class="nv">%</span> <span class="nv">num</span><span class="p">);</span> <span class="sr">//</span> <span class="err">使用</span><span class="nn">boost::</span><span class="n">format</span>
+  <span class="err">int</span> <span class="err">num</span> <span class="err">=</span> <span class="err">numCreated_.incrementAndGet()</span><span class="p">;</span>
+  <span class="err">if</span> <span class="err">(name_.empty())</span>
+  <span class="err">{</span>
+    <span class="err">char</span> <span class="err">buf</span><span class="cp">[</span><span class="mi">32</span><span class="cp">]</span><span class="p">;</span>
+    <span class="err">snprintf(buf,</span> <span class="err">sizeof</span> <span class="err">buf,</span> <span class="err">&quot;Thread%d&quot;,</span> <span class="err">num)</span><span class="p">;</span>
+    <span class="err">name_</span> <span class="err">=</span> <span class="err">buf</span><span class="p">;</span>
+    <span class="err">//name_</span> <span class="err">=</span> <span class="err">str(</span><span class="n">boost</span><span class="p">:</span><span class="o">:</span><span class="nf">format</span><span class="p">(</span><span class="s2">&quot;Thread%1%&quot;</span><span class="p">)</span> <span class="o">%</span> <span class="n">num</span><span class="p">);</span> <span class="err">//</span> <span class="err">使用</span><span class="n">boost</span><span class="p">:</span><span class="o">:</span><span class="n">format</span>
   <span class="p">}</span>
-<span class="p">}</span>
+<span class="err">}</span>
 </pre></div>
 
 
 <p>线程启动函数，调用<code>pthread_create</code>创建线程，线程函数为detail::startThread，传递给线程函数的参数data是在heap上分配的，data存放了线程<code>真正要执行的函数</code>记为func、线程id、线程name等信息。detail::startThread会调用func启动线程，所以detail::startThread可以看成是一个跳板或中介。</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">Thread</span><span class="o">::</span><span class="n">start</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">Thread</span><span class="o">::</span><span class="n">start</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">assert</span><span class="p">(</span><span class="o">!</span><span class="n">started_</span><span class="p">);</span> <span class="c1">// 确保线程没有启动</span>
   <span class="n">started_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>   <span class="c1">// 设置标记，线程已经启动</span>
@@ -241,7 +241,7 @@
 
 
 <p>detail::startThread首先将参数转型为ThreadData*，然后调用data-&gt;runInThread()。</p>
-<div class="highlight"><pre><span class="kt">void</span><span class="o">*</span> <span class="n">detail</span><span class="o">::</span><span class="n">startThread</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">obj</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span><span class="o">*</span> <span class="n">detail</span><span class="o">::</span><span class="n">startThread</span><span class="p">(</span><span class="kt">void</span><span class="o">*</span> <span class="n">obj</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">ThreadData</span><span class="o">*</span> <span class="n">data</span> <span class="o">=</span> <span class="n">static_cast</span><span class="o">&lt;</span><span class="n">ThreadData</span><span class="o">*&gt;</span><span class="p">(</span><span class="n">obj</span><span class="p">);</span>
   <span class="n">data</span><span class="o">-&gt;</span><span class="n">runInThread</span><span class="p">();</span>
@@ -252,11 +252,11 @@
 
 
 <p>runInThread()最终会调用func()。</p>
-<div class="highlight"><pre>  <span class="kt">void</span> <span class="n">ThreadData</span><span class="o">::</span><span class="n">runInThread</span><span class="p">()</span>
+<div class="highlight"><pre><span></span>  <span class="kt">void</span> <span class="n">ThreadData</span><span class="o">::</span><span class="n">runInThread</span><span class="p">()</span>
   <span class="p">{</span>
-    <span class="n">pid_t</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">muduo</span><span class="o">::</span><span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">();</span>
+    <span class="kt">pid_t</span> <span class="n">tid</span> <span class="o">=</span> <span class="n">muduo</span><span class="o">::</span><span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">();</span>
 
-    <span class="n">boost</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">ptid</span> <span class="o">=</span> <span class="n">wkTid_</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
+    <span class="n">boost</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">pid_t</span><span class="o">&gt;</span> <span class="n">ptid</span> <span class="o">=</span> <span class="n">wkTid_</span><span class="p">.</span><span class="n">lock</span><span class="p">();</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">ptid</span><span class="p">)</span>
     <span class="p">{</span>
       <span class="o">*</span><span class="n">ptid</span> <span class="o">=</span> <span class="n">tid</span><span class="p">;</span>
@@ -296,16 +296,16 @@
 
 
 <h1>ThreadData</h1>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">ThreadData</span>
+<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">ThreadData</span>
 <span class="p">{</span>
   <span class="k">typedef</span> <span class="n">muduo</span><span class="o">::</span><span class="n">Thread</span><span class="o">::</span><span class="n">ThreadFunc</span> <span class="n">ThreadFunc</span><span class="p">;</span>
   <span class="n">ThreadFunc</span> <span class="n">func_</span><span class="p">;</span>
   <span class="n">string</span> <span class="n">name_</span><span class="p">;</span>
-  <span class="n">boost</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;</span> <span class="n">wkTid_</span><span class="p">;</span>
+  <span class="n">boost</span><span class="o">::</span><span class="n">weak_ptr</span><span class="o">&lt;</span><span class="kt">pid_t</span><span class="o">&gt;</span> <span class="n">wkTid_</span><span class="p">;</span>
 
   <span class="n">ThreadData</span><span class="p">(</span><span class="k">const</span> <span class="n">ThreadFunc</span><span class="o">&amp;</span> <span class="n">func</span><span class="p">,</span>
              <span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">name</span><span class="p">,</span>
-             <span class="k">const</span> <span class="n">boost</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">pid_t</span><span class="o">&gt;&amp;</span> <span class="n">tid</span><span class="p">)</span>
+             <span class="k">const</span> <span class="n">boost</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="kt">pid_t</span><span class="o">&gt;&amp;</span> <span class="n">tid</span><span class="p">)</span>
     <span class="o">:</span> <span class="n">func_</span><span class="p">(</span><span class="n">func</span><span class="p">),</span>
       <span class="n">name_</span><span class="p">(</span><span class="n">name</span><span class="p">),</span>
       <span class="n">wkTid_</span><span class="p">(</span><span class="n">tid</span><span class="p">)</span>
@@ -321,7 +321,7 @@
 <h2>为什么不能直接在创建线程的时候执行某个类的成员函数？</h2>
 <p>因为<code>pthread_create</code>的线程函数定义为<code>void *func(void*)</code>，无法将non-staic成员函数传递给<code>pthread_create</code>。</p>
 <p>试想，如果<code>pthread_create</code>的线程函数参数定义为<code>boost::function&lt;void*(void*)&gt;</code>,那么结合boost::bind，就可以将一个成员函数作为参数了，像这样：</p>
-<div class="highlight"><pre><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Class</span><span class="o">::</span><span class="n">func</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">,</span> <span class="n">_1</span><span class="p">),</span> <span class="n">arg</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="n">pthread_create</span><span class="p">(</span><span class="o">&amp;</span><span class="n">tid</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">boost</span><span class="o">::</span><span class="n">bind</span><span class="p">(</span><span class="o">&amp;</span><span class="n">Class</span><span class="o">::</span><span class="n">func</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">obj</span><span class="p">,</span> <span class="n">_1</span><span class="p">),</span> <span class="n">arg</span><span class="p">);</span>
 </pre></div>
 
 
@@ -329,18 +329,6 @@
 <h2>指针可以连接C和C++</h2>
 <p><code>pthread_create</code>, <code>epoll_event.data.ptr</code> 都可以用指针来连接C和C++。一般是将某个类的对象的指针传递给这些C-api/C-struct，在使用时进行转型。所以指针还是很重要的。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-thread.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -360,12 +348,10 @@
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -404,6 +390,7 @@
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -416,15 +403,6 @@
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

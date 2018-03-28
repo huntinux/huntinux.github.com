@@ -4,14 +4,14 @@
 # Pelican blog auto tool
 #
 
-PELICAN_DIR='/home/huntinux/work/pelican/'
-BLOG_DIR='/home/huntinux/work/pelican/newblog/'
+PELICAN_DIR='/home/jinger/virtualenvs/pelican/'
+BLOG_DIR='/home/jinger/virtualenvs/pelican/'
 
 #
 #  enter virtualenv
 #
 cd $PELICAN_DIR
-source ./bin/active
+source ./bin/activate
 
 #
 # enter blog's root dir
@@ -23,7 +23,7 @@ make serve &
 #
 # use online Markdown editor
 #
-firefox http://dillinger.io/  
+firefox http://localhost:8000 
 
 #
 # remeber save file to $BLOG_DIR/content

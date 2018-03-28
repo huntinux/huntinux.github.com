@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-07-28T11:00:00+08:00">
-                Thu 28 July 2016
+                四 28 七月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -63,19 +63,19 @@
             </footer><!-- /.post-info -->
             <div class="entry-content">
               <h1>使用pthread_once</h1>
-<div class="highlight"><pre><span class="cp">#include &lt;boost/noncopyable.hpp&gt;</span>
-<span class="cp">#include &lt;pthread.h&gt;</span>
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;boost/noncopyable.hpp&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;pthread.h&gt;</span><span class="cp"></span>
 
 <span class="n">template</span><span class="o">&lt;</span><span class="kr">typename</span> <span class="n">T</span><span class="o">&gt;</span>
-<span class="n">class</span> <span class="n">Singleton</span> <span class="o">:</span> <span class="n">private</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span> <span class="p">{</span>
+<span class="n">class</span> <span class="nl">Singleton</span> <span class="p">:</span> <span class="n">private</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span> <span class="p">{</span>
 
-<span class="nl">public:</span>
+<span class="nl">public</span><span class="p">:</span>
     <span class="k">static</span> <span class="n">T</span><span class="o">&amp;</span> <span class="n">instance</span><span class="p">()</span>
     <span class="p">{</span>
         <span class="n">pthread_once</span><span class="p">(</span><span class="o">&amp;</span><span class="n">ponce_</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">Singleton</span><span class="o">::</span><span class="n">init</span><span class="p">);</span>
         <span class="k">return</span> <span class="o">*</span><span class="n">obj_</span><span class="p">;</span>
     <span class="p">}</span>
-<span class="nl">private:</span>
+<span class="nl">private</span><span class="p">:</span>
     <span class="n">Singleton</span><span class="p">();</span>
     <span class="o">~</span><span class="n">Singleton</span><span class="p">();</span>
     <span class="k">static</span> <span class="kt">void</span> <span class="nf">init</span><span class="p">()</span>
@@ -95,7 +95,7 @@
 
 
 <p>如果想定制new，那么需要使用模板特化（template specialization）（EffectiveC++ rule25）</p>
-<div class="highlight"><pre><span class="cp">#include &lt;iostream&gt;</span>
+<div class="highlight"><pre><span></span><span class="cp">#include</span> <span class="cpf">&lt;iostream&gt;</span><span class="cp"></span>
 <span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
     <span class="n">Foo</span><span class="p">(</span><span class="kt">int</span> <span class="n">i</span><span class="p">)</span> <span class="o">:</span> <span class="n">v_</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="p">{}</span>
     <span class="kt">int</span> <span class="n">v_</span><span class="p">;</span> 
@@ -139,7 +139,7 @@ http://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html</p>
 <blockquote>
 <p>http://www.aristeia.com/Papers/DDJ_Jul_Aug_2004_revised.pdf</p>
 </blockquote>
-<div class="highlight"><pre><span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="nf">instance</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="nf">instance</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">if</span><span class="p">(</span><span class="n">obj_</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">){</span> <span class="c1">// 1st test</span>
         <span class="n">Lock</span> <span class="n">lock</span><span class="p">;</span> <span class="c1">// auto lock</span>
@@ -163,7 +163,7 @@ Step 3: Make pInstance point to the allocated memory.</p>
 </blockquote>
 <p>而编译器有可能将这三个步骤的顺序弄乱（交换2和3的顺序），比如 step1-&gt;step3-&gt;step2。</p>
 <p>那么DCL有可能变成：(step1-&gt; step3-&gt; step2)</p>
-<div class="highlight"><pre><span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="nf">instance</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="k">static</span> <span class="n">Singleton</span><span class="o">*</span> <span class="nf">instance</span><span class="p">()</span>
 <span class="p">{</span>
     <span class="k">if</span><span class="p">(</span><span class="n">obj_</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">){</span>
         <span class="n">Lock</span> <span class="n">lock</span><span class="p">;</span>
@@ -182,7 +182,7 @@ Step 3: Make pInstance point to the allocated memory.</p>
 <p>thread1执行到了step3，此时指针obj_已经不是NULL，但是这是还有没构造好。
 thread2有可能就使用了还没有构造好的obj_，很危险！</p>
 <p>倒是可以使用使用<code>memory barrier</code>阻止编译器改变指令顺序来保证线程安全，但是这么做不是portable的。</p>
-<div class="highlight"><pre><span class="n">Singleton</span><span class="o">*</span> <span class="n">Singleton</span><span class="o">::</span><span class="n">getInstance</span><span class="p">()</span> <span class="p">{</span>
+<div class="highlight"><pre><span></span><span class="n">Singleton</span><span class="o">*</span> <span class="n">Singleton</span><span class="o">::</span><span class="n">getInstance</span><span class="p">()</span> <span class="p">{</span>
     <span class="n">Singleton</span><span class="o">*</span> <span class="n">tmp</span> <span class="o">=</span> <span class="n">m_instance</span><span class="p">;</span>
     <span class="p">...</span>                     <span class="c1">// insert memory barrier</span>
     <span class="k">if</span> <span class="p">(</span><span class="n">tmp</span> <span class="o">==</span> <span class="nb">NULL</span><span class="p">)</span> <span class="p">{</span>
@@ -221,18 +221,6 @@ http://preshing.com/20130930/double-checked-locking-is-fixed-in-cpp11/</p>
 </li>
 </ul>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-thread-safe-singleton.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -252,12 +240,10 @@ http://preshing.com/20130930/double-checked-locking-is-fixed-in-cpp11/</p>
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -296,6 +282,7 @@ http://preshing.com/20130930/double-checked-locking-is-fixed-in-cpp11/</p>
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -308,15 +295,6 @@ http://preshing.com/20130930/double-checked-locking-is-fixed-in-cpp11/</p>
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

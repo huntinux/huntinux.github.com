@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-07-26T11:00:00+08:00">
-                Tue 26 July 2016
+                二 26 七月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -68,7 +68,7 @@
 </blockquote>
 <p>线程池ThreadPool用到了前面分析的Thread、MutexLock、Condition。ThreadPool可以设置工作线程的数量，并向任务队列放入任务。放入到任务队列中的任务将由某个工作线程执行。</p>
 <h1>成员变量</h1>
-<div class="highlight"><pre> <span class="nl">private:</span>
+<div class="highlight"><pre><span></span> <span class="nl">private</span><span class="p">:</span>
   <span class="n">mutable</span> <span class="n">MutexLock</span> <span class="n">mutex_</span><span class="p">;</span> <span class="c1">// mutable的，表示在const函数中也可以改变它</span>
   <span class="n">Condition</span> <span class="n">notEmpty_</span><span class="p">;</span> <span class="c1">// 任务队列queue_不为空了，有任务可以执行了，进而唤醒等待的线程</span>
   <span class="n">Condition</span> <span class="n">notFull_</span><span class="p">;</span>  <span class="c1">// 任务队列queue_不满了，有空间可以使用了，进而唤醒等待的线程</span>
@@ -78,14 +78,14 @@
   <span class="n">boost</span><span class="o">::</span><span class="n">ptr_vector</span><span class="o">&lt;</span><span class="n">muduo</span><span class="o">::</span><span class="n">Thread</span><span class="o">&gt;</span> <span class="n">threads_</span><span class="p">;</span> <span class="c1">// 工作线程容器</span>
   <span class="n">std</span><span class="o">::</span><span class="n">deque</span><span class="o">&lt;</span><span class="n">Task</span><span class="o">&gt;</span> <span class="n">queue_</span><span class="p">;</span> <span class="c1">// 任务队列</span>
   <span class="kt">size_t</span> <span class="n">maxQueueSize_</span><span class="p">;</span> <span class="c1">// 队列最大大小</span>
-  <span class="n">bool</span> <span class="n">running_</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">running_</span><span class="p">;</span>
 </pre></div>
 
 
 <p>使用<a href="http://www.boost.org/doc/libs/1_61_0/libs/ptr_container/doc/ptr_container.html">boost::ptr_vector</a>存放Thead。</p>
 <p>每个Task都是<code>typedef boost::function&lt;void ()&gt; Task; 所有任务都放到</code>queue_<code>中。需要使用条件变量来维护线程将的同步，比如：通知其他线程有任务到来了，可以向任务队列放任务了等等。</code></p>
 <h1>构造/析构</h1>
-<div class="highlight"><pre><span class="n">ThreadPool</span><span class="o">::</span><span class="n">ThreadPool</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">nameArg</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="n">ThreadPool</span><span class="o">::</span><span class="n">ThreadPool</span><span class="p">(</span><span class="k">const</span> <span class="n">string</span><span class="o">&amp;</span> <span class="n">nameArg</span><span class="p">)</span>
   <span class="o">:</span> <span class="n">mutex_</span><span class="p">(),</span>
     <span class="n">notEmpty_</span><span class="p">(</span><span class="n">mutex_</span><span class="p">),</span>
     <span class="n">notFull_</span><span class="p">(</span><span class="n">mutex_</span><span class="p">),</span>
@@ -107,7 +107,7 @@
 
 <p>构造函数对成员变量进行初始化（使用初始化列表），没什么可说的。
 析构函数会调用stop， 唤醒所有休眠的线程，然后等待所有线程处理完。</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">stop</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">stop</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="p">{</span> <span class="c1">// new scope</span>
   <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span> <span class="c1">// ctor of MutexLockGuard will lock mutex_</span>
@@ -122,7 +122,7 @@
 
 
 <h1>线程池start()</h1>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="kt">int</span> <span class="n">numThreads</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">start</span><span class="p">(</span><span class="kt">int</span> <span class="n">numThreads</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="n">assert</span><span class="p">(</span><span class="n">threads_</span><span class="p">.</span><span class="n">empty</span><span class="p">());</span>
   <span class="n">running_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
@@ -145,7 +145,7 @@
 
 
 <p>参数为线程数量，会创建相应数量的线程，执行体为ThreadPool::runInThread。</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">runInThread</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">runInThread</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">try</span>
   <span class="p">{</span>
@@ -185,7 +185,7 @@
 
 
 <h1>获取一个task</h1>
-<div class="highlight"><pre><span class="n">ThreadPool</span><span class="o">::</span><span class="n">Task</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">take</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="n">ThreadPool</span><span class="o">::</span><span class="n">Task</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">take</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">MutexLockGuard</span> <span class="n">lock</span><span class="p">(</span><span class="n">mutex_</span><span class="p">);</span>
   <span class="c1">// always use a while-loop, due to spurious wakeup</span>
@@ -210,7 +210,7 @@
 
 <p>条件变量的wait操作使用while包裹，预防“虚假唤醒”（如被其他线程抢占了）。</p>
 <h1>向线程池添加task</h1>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">run</span><span class="p">(</span><span class="k">const</span> <span class="n">Task</span><span class="o">&amp;</span> <span class="n">task</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">ThreadPool</span><span class="o">::</span><span class="n">run</span><span class="p">(</span><span class="k">const</span> <span class="n">Task</span><span class="o">&amp;</span> <span class="n">task</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">threads_</span><span class="p">.</span><span class="n">empty</span><span class="p">())</span>
   <span class="p">{</span>
@@ -233,8 +233,8 @@
 
 
 <h1>使用示例</h1>
-<div class="highlight"><pre><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
-<span class="nl">public:</span>
+<div class="highlight"><pre><span></span><span class="k">struct</span> <span class="n">Foo</span> <span class="p">{</span>
+<span class="nl">public</span><span class="p">:</span>
     <span class="kt">void</span> <span class="n">DoWork</span><span class="p">()</span> <span class="p">{</span>
         <span class="n">std</span><span class="o">::</span><span class="n">cout</span> <span class="o">&lt;&lt;</span> <span class="s">&quot;run member function in thread:&quot;</span> <span class="o">&lt;&lt;</span> <span class="n">CurrentThread</span><span class="o">::</span><span class="n">tid</span><span class="p">()</span> <span class="o">&lt;&lt;</span> <span class="n">std</span><span class="o">::</span><span class="n">endl</span><span class="p">;</span>
     <span class="p">}</span>
@@ -272,18 +272,6 @@
 
 <p>可以看到，ThreadPool可以很方便的将某个task放到任务队列中，该task会由某个线程执行。task使用boost::function表示，可以方便地将函数指针、普通函数、成员函数（结合boost::bind）、lambda、重载了函数调用运算符‘()’的类的对象（这些统称为可调用对象）放入到任务队列当中，非常方便。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-threadpool.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -303,12 +291,10 @@
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -347,6 +333,7 @@
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -359,15 +346,6 @@
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

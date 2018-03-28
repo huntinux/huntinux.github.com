@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-07-21T09:00:00+08:00">
-                Thu 21 July 2016
+                四 21 七月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -79,21 +79,21 @@ Atomic variables being widely used in kernel, but from some reason no-one bother
 atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可以在用户模式下使用。</p>
 <h2>相关函数</h2>
 <p>这些函数都是built-in函数，不需要包含头文件</p>
-<div class="highlight"><pre><span class="c1">// 先获取变量值再改变它</span>
-<span class="n">type</span> <span class="n">__sync_fetch_and_add</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_fetch_and_sub</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_fetch_and_or</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_fetch_and_and</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_fetch_and_xor</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_fetch_and_nand</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><span class="c1">// 先获取变量值再改变它</span>
+<span class="n">type</span> <span class="nf">__sync_fetch_and_add</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_fetch_and_sub</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_fetch_and_or</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_fetch_and_and</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_fetch_and_xor</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_fetch_and_nand</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
 
 <span class="c1">// 先改变变量再获取它</span>
-<span class="n">type</span> <span class="n">__sync_add_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_sub_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_or_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_and_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_xor_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
-<span class="n">type</span> <span class="n">__sync_nand_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_add_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_sub_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_or_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_and_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_xor_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
+<span class="n">type</span> <span class="nf">__sync_nand_and_fetch</span> <span class="p">(</span><span class="n">type</span> <span class="o">*</span><span class="n">ptr</span><span class="p">,</span> <span class="n">type</span> <span class="n">value</span><span class="p">);</span>
 
 <span class="cm">/*</span>
 <span class="cm">type in each of the expressions can be one of the following:</span>
@@ -109,21 +109,21 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
 
 
 <h2>测试程序</h2>
-<div class="highlight"><pre><span class="cp">#define _GNU_SOURCE</span>
-<span class="cp">#include &lt;stdio.h&gt;</span>
-<span class="cp">#include &lt;pthread.h&gt;</span>
-<span class="cp">#include &lt;unistd.h&gt;</span>
-<span class="cp">#include &lt;stdlib.h&gt;</span>
-<span class="cp">#include &lt;sched.h&gt;</span>
-<span class="cp">#include &lt;linux/unistd.h&gt;</span>
-<span class="cp">#include &lt;sys/syscall.h&gt;</span>
-<span class="cp">#include &lt;errno.h&gt;</span>
+<div class="highlight"><pre><span></span><span class="cp">#define _GNU_SOURCE</span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdio.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;pthread.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;unistd.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;stdlib.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sched.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;linux/unistd.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;sys/syscall.h&gt;</span><span class="cp"></span>
+<span class="cp">#include</span> <span class="cpf">&lt;errno.h&gt;</span><span class="cp"></span>
 
 <span class="cp">#define INC_TO 1000000 </span><span class="c1">// one million...</span>
 
 <span class="kt">int</span> <span class="n">global_int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span>
 
-<span class="n">pid_t</span> <span class="nf">gettid</span><span class="p">(</span> <span class="kt">void</span> <span class="p">)</span>
+<span class="kt">pid_t</span> <span class="nf">gettid</span><span class="p">(</span> <span class="kt">void</span> <span class="p">)</span>
 <span class="p">{</span>
     <span class="k">return</span> <span class="n">syscall</span><span class="p">(</span> <span class="n">__NR_gettid</span> <span class="p">);</span>
 <span class="p">}</span>
@@ -132,12 +132,12 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
 <span class="p">{</span>
     <span class="kt">int</span> <span class="n">i</span><span class="p">;</span>
     <span class="kt">int</span> <span class="n">proc_num</span> <span class="o">=</span> <span class="p">(</span><span class="kt">int</span><span class="p">)(</span><span class="kt">long</span><span class="p">)</span><span class="n">arg</span><span class="p">;</span>
-    <span class="n">cpu_set_t</span> <span class="n">set</span><span class="p">;</span>
+    <span class="kt">cpu_set_t</span> <span class="n">set</span><span class="p">;</span>
 
     <span class="n">CPU_ZERO</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">);</span>
     <span class="n">CPU_SET</span><span class="p">(</span> <span class="n">proc_num</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">);</span>
 
-    <span class="k">if</span> <span class="p">(</span><span class="n">sched_setaffinity</span><span class="p">(</span> <span class="n">gettid</span><span class="p">(),</span> <span class="k">sizeof</span><span class="p">(</span> <span class="n">cpu_set_t</span> <span class="p">),</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">))</span>
+    <span class="k">if</span> <span class="p">(</span><span class="n">sched_setaffinity</span><span class="p">(</span> <span class="n">gettid</span><span class="p">(),</span> <span class="k">sizeof</span><span class="p">(</span> <span class="kt">cpu_set_t</span> <span class="p">),</span> <span class="o">&amp;</span><span class="n">set</span> <span class="p">))</span>
     <span class="p">{</span>
         <span class="n">perror</span><span class="p">(</span> <span class="s">&quot;sched_setaffinity&quot;</span> <span class="p">);</span>
         <span class="k">return</span> <span class="nb">NULL</span><span class="p">;</span>
@@ -201,13 +201,13 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
 
 
 <p>编译</p>
-<div class="highlight"><pre><span class="nv">$ </span>gcc -pthread yourfilename
+<div class="highlight"><pre><span></span>$ gcc -pthread yourfilename
 </pre></div>
 
 
 <p>程序首先获取处理器个数N，然后创建N个线程分别在N个处理器上运行（原来还可以这么完&gt;_&lt;）。这四个线程都对<code>global_int</code>进行加1操作，正确结果应该是1000000×N。如果不进行一些同步控制（mutex、semaphore、spinlock）或使用上面提到的built-in原子操作函数，那么结果是随机的。尽管加上-O2也能得到正确结果，但是还是使用原子操作比较合理。</p>
 <h2>一些细节</h2>
-<div class="highlight"><pre><span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="k">for</span> <span class="p">(</span><span class="n">i</span> <span class="o">=</span> <span class="mi">0</span><span class="p">;</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="n">procs</span><span class="p">;</span> <span class="n">i</span><span class="o">++</span><span class="p">)</span>
 <span class="p">{</span>
   <span class="k">if</span> <span class="p">(</span><span class="n">pthread_create</span><span class="p">(</span> <span class="o">&amp;</span><span class="n">thrs</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="nb">NULL</span><span class="p">,</span> <span class="n">thread_routine</span><span class="p">,</span>
     <span class="p">(</span><span class="kt">void</span> <span class="o">*</span><span class="p">)(</span><span class="kt">long</span><span class="p">)</span><span class="n">i</span> <span class="p">))</span>
@@ -218,18 +218,6 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
 
 <p>注意<code>pthread_create</code>传递的最后一个参数是否会出现“竞争”。这里的代码不会出现。因为i是以值传递过去的。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "multi-threadxia-dui-intjin-xing-yuan-zi-cao-zuo.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -249,12 +237,10 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -293,6 +279,7 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -305,15 +292,6 @@ atomic variable在linux kernel中被广泛使用，但是直到gcc 4.1.2才可�
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

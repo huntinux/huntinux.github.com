@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2014-01-01T09:00:00+08:00">
-                Wed 01 January 2014
+                三 01 一月 2014
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -71,13 +71,13 @@ Documentation/HOWTO
 <h3>Code Browsing</h3>
 <h4>cscope，tags</h4>
 <p>原来内核中有生成 cscope和tags的脚本</p>
-<div class="highlight"><pre>make cscope
+<div class="highlight"><pre><span></span>make cscope
 make tags
 </pre></div>
 
 
 <p>给make加上V=1，可以看到哪些命令被执行。</p>
-<div class="highlight"><pre><span class="nv">$ </span>make cscope <span class="nv">V</span><span class="o">=</span>1
+<div class="highlight"><pre><span></span>$ make cscope <span class="nv">V</span><span class="o">=</span><span class="m">1</span>
   /bin/bash linux-2.6.32.63/scripts/tags.sh cscope
 .....
 + cscope -b -f cscope.out
@@ -87,12 +87,12 @@ make tags
 <p>可以看到调用的是 scripts/tags.sh 这个脚本。</p>
 <h4>find + grep</h4>
 <p>查找结构体定义</p>
-<div class="highlight"><pre>find . -name <span class="s1">&#39;*.[chS]&#39;</span> | xargs grep -EnH <span class="s2">&quot;\W*struct\W+task_struct\W*{&quot;</span>
+<div class="highlight"><pre><span></span>find . -name <span class="s1">&#39;*.[chS]&#39;</span> <span class="p">|</span> xargs grep -EnH <span class="s2">&quot;\W*struct\W+task_struct\W*{&quot;</span>
 </pre></div>
 
 
 <p>查找函数定义</p>
-<div class="highlight"><pre>find . -name <span class="s1">&#39;*.[chS]&#39;</span> | xargs grep -EnH <span class="s2">&quot;cdev_init\W*\(struct cdev&quot;</span>
+<div class="highlight"><pre><span></span>find . -name <span class="s1">&#39;*.[chS]&#39;</span> <span class="p">|</span> xargs grep -EnH <span class="s2">&quot;cdev_init\W*\(struct cdev&quot;</span>
 </pre></div>
 
 
@@ -106,7 +106,7 @@ make tags
 <p>找一个内核为 2.6.32以下（因为我要以2.6.32为研究对象）的linux发行版本。fedora12是2.6.31。可以编译安装2.6.32内核，然后编写驱动测试。
 下载fedora 12:</p>
 <p>使用axel应该比wget快点。</p>
-<div class="highlight"><pre>axel -n 6 http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/12/
+<div class="highlight"><pre><span></span>axel -n <span class="m">6</span> http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/12/
 </pre></div>
 
 
@@ -123,18 +123,6 @@ make tags
 <li><a href="https://github.com/4get/ldd3_examples">other</a></li>
 </ul>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "linux-device-driver.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -154,12 +142,10 @@ make tags
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -198,6 +184,7 @@ make tags
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -210,15 +197,6 @@ make tags
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

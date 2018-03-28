@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-07-25T09:00:00+08:00">
-                Mon 25 July 2016
+                一 25 七月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -68,13 +68,13 @@
 </blockquote>
 <p>MutexLock是对互斥锁的封装，使用时用作一个类的成员变量，保护另一个常用被互斥访问。</p>
 <h2>成员变量</h2>
-<div class="highlight"><pre>  <span class="n">pthread_mutex_t</span> <span class="n">mutex_</span><span class="p">;</span>
-  <span class="n">pid_t</span> <span class="n">holder_</span><span class="p">;</span> <span class="c1">// 由哪个线程持有</span>
+<div class="highlight"><pre><span></span>  <span class="n">pthread_mutex_t</span> <span class="n">mutex_</span><span class="p">;</span>
+  <span class="kt">pid_t</span> <span class="n">holder_</span><span class="p">;</span> <span class="c1">// 由哪个线程持有</span>
 </pre></div>
 
 
 <h2>default构造函数：</h2>
-<div class="highlight"><pre>  <span class="n">MutexLock</span><span class="p">()</span>
+<div class="highlight"><pre><span></span>  <span class="n">MutexLock</span><span class="p">()</span>
     <span class="o">:</span> <span class="n">holder_</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span> <span class="c1">// 没有holder thread</span>
   <span class="p">{</span>
     <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_mutex_init</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">,</span> <span class="nb">NULL</span><span class="p">));</span> <span class="c1">// 对mutex初始化</span>
@@ -84,7 +84,7 @@
 
 <p>MCHECK的解释在最后，主要用于检查函数返回值是否为成功，失败了就终止程序。</p>
 <h2>加锁、解锁</h2>
-<div class="highlight"><pre>  <span class="kt">void</span> <span class="nf">lock</span><span class="p">()</span>
+<div class="highlight"><pre><span></span>  <span class="kt">void</span> <span class="nf">lock</span><span class="p">()</span>
   <span class="p">{</span>
     <span class="n">MCHECK</span><span class="p">(</span><span class="n">pthread_mutex_lock</span><span class="p">(</span><span class="o">&amp;</span><span class="n">mutex_</span><span class="p">));</span>
     <span class="n">assignHolder</span><span class="p">();</span>
@@ -106,9 +106,9 @@
 <p>加锁、解锁分别调用<code>pthread_mutex_lock</code>和<code>pthread_mutex_unlock</code>。其中<code>getPthreadMutex</code>返回mutex的指针，可以供pthread中需要mutex*作为参数的函数使用（如<code>pthread_cond_wait</code>）。</p>
 <h2>UnassignGuard</h2>
 <p>该类的唯一成员变量是一个MutexLock引用，在构造时将MutexLock的holder清空、析构时将holder设置为当前线程。该类型是RAII型。在muduo::Condition条件变量中用到。</p>
-<div class="highlight"><pre>  <span class="n">class</span> <span class="n">UnassignGuard</span> <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
+<div class="highlight"><pre><span></span>  <span class="n">class</span> <span class="nl">UnassignGuard</span> <span class="p">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
   <span class="p">{</span>
-   <span class="nl">public:</span>
+   <span class="nl">public</span><span class="p">:</span>
     <span class="n">UnassignGuard</span><span class="p">(</span><span class="n">MutexLock</span><span class="o">&amp;</span> <span class="n">owner</span><span class="p">)</span>
       <span class="o">:</span> <span class="n">owner_</span><span class="p">(</span><span class="n">owner</span><span class="p">)</span>
     <span class="p">{</span>
@@ -120,7 +120,7 @@
       <span class="n">owner_</span><span class="p">.</span><span class="n">assignHolder</span><span class="p">();</span>
     <span class="p">}</span>
 
-   <span class="nl">private:</span>
+   <span class="nl">private</span><span class="p">:</span>
     <span class="n">MutexLock</span><span class="o">&amp;</span> <span class="n">owner_</span><span class="p">;</span>
   <span class="p">};</span>
 </pre></div>
@@ -128,15 +128,15 @@
 
 <h2>MutexLockGuard</h2>
 <p>这又是一个RAII型，作为栈上变量使用，在构造时加锁，析构时解锁。</p>
-<div class="highlight"><pre><span class="c1">// Use as a stack variable, eg.</span>
+<div class="highlight"><pre><span></span><span class="c1">// Use as a stack variable, eg.</span>
 <span class="c1">// int Foo::size() const</span>
 <span class="c1">// {</span>
 <span class="c1">//   MutexLockGuard lock(mutex_);</span>
 <span class="c1">//   return data_.size();</span>
 <span class="c1">// }</span>
-<span class="n">class</span> <span class="n">MutexLockGuard</span> <span class="o">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
+<span class="n">class</span> <span class="nl">MutexLockGuard</span> <span class="p">:</span> <span class="n">boost</span><span class="o">::</span><span class="n">noncopyable</span>
 <span class="p">{</span>
- <span class="nl">public:</span>
+ <span class="nl">public</span><span class="p">:</span>
   <span class="n">explicit</span> <span class="n">MutexLockGuard</span><span class="p">(</span><span class="n">MutexLock</span><span class="o">&amp;</span> <span class="n">mutex</span><span class="p">)</span>
     <span class="o">:</span> <span class="n">mutex_</span><span class="p">(</span><span class="n">mutex</span><span class="p">)</span>
   <span class="p">{</span>
@@ -148,7 +148,7 @@
     <span class="n">mutex_</span><span class="p">.</span><span class="n">unlock</span><span class="p">();</span>
   <span class="p">}</span>
 
- <span class="nl">private:</span>
+ <span class="nl">private</span><span class="p">:</span>
 
   <span class="n">MutexLock</span><span class="o">&amp;</span> <span class="n">mutex_</span><span class="p">;</span>
 <span class="p">};</span>
@@ -157,11 +157,11 @@
 
 <h2>MCHECK</h2>
 <p>接下来分析一下MCHECK</p>
-<div class="highlight"><pre><span class="cp">#ifdef CHECK_PTHREAD_RETURN_VALUE</span>
+<div class="highlight"><pre><span></span><span class="cp">#ifdef CHECK_PTHREAD_RETURN_VALUE</span>
 
 <span class="cp">#ifdef NDEBUG</span>
 <span class="n">__BEGIN_DECLS</span>
-<span class="k">extern</span> <span class="kt">void</span> <span class="n">__assert_perror_fail</span> <span class="p">(</span><span class="kt">int</span> <span class="n">errnum</span><span class="p">,</span>
+<span class="k">extern</span> <span class="kt">void</span> <span class="nf">__assert_perror_fail</span> <span class="p">(</span><span class="kt">int</span> <span class="n">errnum</span><span class="p">,</span>
                                   <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">file</span><span class="p">,</span>
                                   <span class="kt">unsigned</span> <span class="kt">int</span> <span class="n">line</span><span class="p">,</span>
                                   <span class="k">const</span> <span class="kt">char</span> <span class="o">*</span><span class="n">function</span><span class="p">)</span>
@@ -183,7 +183,7 @@
 
 
 <p>如果没有define<code>CHECK_PTHREAD_RETURN_VALUE</code>，那么MCHECK是这样事儿的：</p>
-<div class="highlight"><pre><span class="cp">#define MCHECK(ret) ({ __typeof__ (ret) errnum = (ret);         \</span>
+<div class="highlight"><pre><span></span><span class="cp">#define MCHECK(ret) ({ __typeof__ (ret) errnum = (ret);         \</span>
 <span class="cp">                       assert(errnum == 0); (void) errnum;})</span>
 </pre></div>
 
@@ -192,14 +192,14 @@
 <h3><code>__typedef__</code></h3>
 <p>其中<a href="https://gcc.gnu.org/onlinedocs/gcc/Typeof.html"><code>__typedef__</code></a>是gcc的keyword，用来得到参数（参数可以为表达式）的类型。（感觉和C++11的<code>decltype</code>好像，而且gcc还有<code>__auto_type</code>, 和C++11的<code>auto</code>类似）。最后一句<code>(void) errnum;</code>没明白有什么作用。</p>
 <h3><code>__BEGIN_DECLS</code></h3>
-<div class="highlight"><pre><span class="sr">/* C++ needs to know that types and declarations are C, not C++.  */</span>
-<span class="c1">#ifdef  __cplusplus</span>
-<span class="c1"># define __BEGIN_DECLS  extern &quot;C&quot; {</span>
-<span class="c1"># define __END_DECLS    }</span>
-<span class="c1">#else</span>
-<span class="c1"># define __BEGIN_DECLS</span>
-<span class="c1"># define __END_DECLS</span>
-<span class="c1">#endif</span>
+<div class="highlight"><pre><span></span><span class="cm">/* C++ needs to know that types and declarations are C, not C++.  */</span>
+<span class="cp">#ifdef  __cplusplus</span>
+<span class="cp"># define __BEGIN_DECLS  extern &quot;C&quot; {</span>
+<span class="cp"># define __END_DECLS    }</span>
+<span class="cp">#else</span>
+<span class="cp"># define __BEGIN_DECLS</span>
+<span class="cp"># define __END_DECLS</span>
+<span class="cp">#endif</span>
 </pre></div>
 
 
@@ -216,18 +216,6 @@ Since C++ has overloading of function names and C does not, the C++ compiler can
 <p>该函数定义在glibc中，会打印出错误信息，然后调用abort终止程序。因为它是个C函数所以用<code>extern "C"</code>包裹了一下。（其他C的标准头文件应该是自动处理了，不需要手动添加<code>extern "C"</code>，可以看<code>/usr/include/string.h</code>来验证一下）。</p>
 <p>此外，<code>__builtin_expect</code>已经在前面的<a href="http://blog.csdn.net/huntinux/article/details/51995913#t2">文章</a>中学习过，不在赘述。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-mutexlock.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -247,12 +235,10 @@ Since C++ has overloading of function names and C does not, the C++ compiler can
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -291,6 +277,7 @@ Since C++ has overloading of function names and C does not, the C++ compiler can
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -303,15 +290,6 @@ Since C++ has overloading of function names and C does not, the C++ compiler can
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>

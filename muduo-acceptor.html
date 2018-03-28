@@ -28,7 +28,7 @@
         <div class="row">
 
           <header id="banner" class="body">
-                  <h1><a href="/">Jinger's Blog <strong></strong></a></h1>
+                  <h1><a href="/">J1n9er's Blog <strong></strong></a></h1>
           </header><!-- /#banner -->
 
             <div id="navigation" class="navbar row">
@@ -55,7 +55,7 @@
             </header>
             <footer class="post-info">
               <abbr class="published" title="2016-08-11T11:00:00+08:00">
-                Thu 11 August 2016
+                四 11 八月 2016
               </abbr>
               <address class="vcard author">By 
                 <a class="url fn" href="/author/hongjincao.html"> hongjin.cao</a>
@@ -66,23 +66,23 @@
 <p>Acceptor用于接受（accept）客户端的连接，通过设置回调函数通知使用者。它只在muduo网络库内部的TcpServer使用，由TcpServer控制它的生命期。</p>
 <p>实际上，Acceptor只是对Channel的封装，通过Channel关注listenfd的readable可读事件，并设置好回调函数就可以了。因此理解了上一节的<code>muduo：Reactor</code>，那么Acceptor也比较容易理解。</p>
 <h1>成员变量</h1>
-<div class="highlight"><pre> <span class="nl">private:</span>
+<div class="highlight"><pre><span></span> <span class="nl">private</span><span class="p">:</span>
   <span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop_</span><span class="p">;</span>
   <span class="n">Socket</span> <span class="n">acceptSocket_</span><span class="p">;</span>   <span class="c1">// 监听套接字，Socket是个RAII型，析构时自动close文件描述符</span>
   <span class="n">Channel</span> <span class="n">acceptChannel_</span><span class="p">;</span> <span class="c1">// 通过该channel，设置监听套接字的readable事件以及回调函数</span>
   <span class="n">NewConnectionCallback</span> <span class="n">newConnectionCallback_</span><span class="p">;</span>
-  <span class="n">bool</span> <span class="n">listenning_</span><span class="p">;</span>
+  <span class="kt">bool</span> <span class="n">listenning_</span><span class="p">;</span>
   <span class="kt">int</span> <span class="n">idleFd_</span><span class="p">;</span>
 </pre></div>
 
 
 <p>其中<code>NewConnectionCallback</code>是个typedef：</p>
-<div class="highlight"><pre><span class="k">typedef</span> <span class="n">NewConnectionCallback</span> <span class="n">boost</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span><span class="p">)</span><span class="o">&gt;</span>
+<div class="highlight"><pre><span></span><span class="k">typedef</span> <span class="n">NewConnectionCallback</span> <span class="n">boost</span><span class="o">::</span><span class="n">function</span><span class="o">&lt;</span><span class="kt">void</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span><span class="p">)</span><span class="o">&gt;</span>
 </pre></div>
 
 
 <h1>构造函数/析构函数</h1>
-<div class="highlight"><pre><span class="n">Acceptor</span><span class="o">::</span><span class="n">Acceptor</span><span class="p">(</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop</span><span class="p">,</span> <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span> <span class="n">listenAddr</span><span class="p">,</span> <span class="n">bool</span> <span class="n">reuseport</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="n">Acceptor</span><span class="o">::</span><span class="n">Acceptor</span><span class="p">(</span><span class="n">EventLoop</span><span class="o">*</span> <span class="n">loop</span><span class="p">,</span> <span class="k">const</span> <span class="n">InetAddress</span><span class="o">&amp;</span> <span class="n">listenAddr</span><span class="p">,</span> <span class="kt">bool</span> <span class="n">reuseport</span><span class="p">)</span>
   <span class="o">:</span> <span class="n">loop_</span><span class="p">(</span><span class="n">loop</span><span class="p">),</span>
     <span class="n">acceptSocket_</span><span class="p">(</span><span class="n">sockets</span><span class="o">::</span><span class="n">createNonblockingOrDie</span><span class="p">(</span><span class="n">listenAddr</span><span class="p">.</span><span class="n">family</span><span class="p">())),</span> <span class="c1">// socket</span>
     <span class="n">acceptChannel_</span><span class="p">(</span><span class="n">loop</span><span class="p">,</span> <span class="n">acceptSocket_</span><span class="p">.</span><span class="n">fd</span><span class="p">()),</span>
@@ -99,7 +99,7 @@
 </pre></div>
 
 
-<div class="highlight"><pre><span class="n">Acceptor</span><span class="o">::~</span><span class="n">Acceptor</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="n">Acceptor</span><span class="o">::~</span><span class="n">Acceptor</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">acceptChannel_</span><span class="p">.</span><span class="n">disableAll</span><span class="p">();</span> <span class="c1">// 移除注册的事件</span>
   <span class="n">acceptChannel_</span><span class="p">.</span><span class="n">remove</span><span class="p">();</span>     <span class="c1">// Poller会持有Channel的裸指针，所以需要将该Channel从Poller中删除，避免Channel析构后，Poller持有空悬指针。</span>
@@ -110,7 +110,7 @@
 
 <h1>公有接口</h1>
 <p><code>Acceptor::listen()</code></p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">Acceptor</span><span class="o">::</span><span class="n">listen</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">Acceptor</span><span class="o">::</span><span class="n">listen</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
   <span class="n">listenning_</span> <span class="o">=</span> <span class="nb">true</span><span class="p">;</span>
@@ -122,7 +122,7 @@
 
 <h1>私有接口</h1>
 <p><code>Acceptor::handleRead()</code>在有新连接时被调用。</p>
-<div class="highlight"><pre><span class="kt">void</span> <span class="n">Acceptor</span><span class="o">::</span><span class="n">handleRead</span><span class="p">()</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="n">Acceptor</span><span class="o">::</span><span class="n">handleRead</span><span class="p">()</span>
 <span class="p">{</span>
   <span class="n">loop_</span><span class="o">-&gt;</span><span class="n">assertInLoopThread</span><span class="p">();</span>
   <span class="n">InetAddress</span> <span class="n">peerAddr</span><span class="p">;</span>
@@ -163,7 +163,7 @@
 <blockquote>
 <p>https://github.com/huntinux/muduo-learn/blob/v0.2/</p>
 </blockquote>
-<div class="highlight"><pre><span class="kt">void</span> <span class="nf">newConnection</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">&amp;</span><span class="n">in_addr</span><span class="p">,</span> <span class="n">socklen_t</span> <span class="n">in_len</span><span class="p">)</span>
+<div class="highlight"><pre><span></span><span class="kt">void</span> <span class="nf">newConnection</span><span class="p">(</span><span class="kt">int</span> <span class="n">sockfd</span><span class="p">,</span> <span class="k">struct</span> <span class="n">sockaddr</span> <span class="o">&amp;</span><span class="n">in_addr</span><span class="p">,</span> <span class="kt">socklen_t</span> <span class="n">in_len</span><span class="p">)</span>
 <span class="p">{</span>
     <span class="n">printf_address</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="o">&amp;</span><span class="n">in_addr</span><span class="p">,</span> <span class="n">in_len</span><span class="p">);</span>
     <span class="o">::</span><span class="n">write</span><span class="p">(</span><span class="n">sockfd</span><span class="p">,</span> <span class="s">&quot;jinger</span><span class="se">\n</span><span class="s">&quot;</span><span class="p">,</span> <span class="mi">8</span><span class="p">);</span>
@@ -185,18 +185,6 @@
 <p>使用者只需要设置好回调函数然后listen即可。<code>socket-&gt;bind-&gt;listen-&gt;accept</code> 这些步骤在底层都已经封装好了。</p>
 <p>此外，上面的代码与muduo真实代码有些出入，但是原理是一样的。</p>
             </div><!-- /.entry-content -->
-            <div class="comments">
-              <h3>Comments</h3>
-              <div id="disqus_thread"></div>
-              <script type="text/javascript">
-                var disqus_identifier = "muduo-acceptor.html";
-                (function() {
-                var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
-                dsq.src = 'https://JingerCode.disqus.com/embed.js';
-                (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
-                })();
-              </script>
-            </div>
 
 
         </div><!-- /.eleven.columns -->
@@ -216,12 +204,10 @@
 		<li><a href="/category/muduo.html">Muduo</a></li>
 		<li><a href="/category/multithread.html">Multithread</a></li>
 		<li><a href="/category/others.html">Others</a></li>
+		<li><a href="/category/python.html">Python</a></li>
 </ul>
 
 
-<h4>Tags</h4>
-	<ul class="blank">
-</ul>
 
 
 <nav class="widget">
@@ -260,6 +246,7 @@
             <div class="row">
               <ul class="socbtns">
 
+                <li><div class="btn primary"><a href="https://github.com/huntinux" target="_blank">Github</a></div></li>
 
 
 
@@ -272,15 +259,6 @@
     </div>
 
 
-<script type="text/javascript">
-    var disqus_shortname = 'JingerCode';
-    (function () {
-        var s = document.createElement('script'); s.async = true;
-        s.type = 'text/javascript';
-        s.src = 'http://' + disqus_shortname + '.disqus.com/count.js';
-        (document.getElementsByTagName('HEAD')[0] || document.getElementsByTagName('BODY')[0]).appendChild(s);
-    }());
-</script>
   <script src="/theme/js/libs/jquery-1.9.1.min.js"></script>
   <script src="/theme/js/libs/gumby.min.js"></script>
   <script src="/theme/js/plugins.js"></script>
